@@ -9,6 +9,7 @@ numpy = "*"
 pyarrow = "*"
 matplotlib = "*"
 ipykernel = "*"
+opencv-python = "*"
 
 [dev-packages]
 
