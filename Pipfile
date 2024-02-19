@@ -10,6 +10,7 @@ pyarrow = "*"
 matplotlib = "*"
 ipykernel = "*"
 opencv-python = "*"
+appnope = "*"
 
 [dev-packages]
 

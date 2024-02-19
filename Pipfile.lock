@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "52dd65bd25387c8648778d5fb497fac4aa0ea7988bba43d706f111df2c43a10f"
+            "sha256": "7f8dfaaf2666875d0f0795d8e69d4139a5aebc4f82dd62f8937feac7bc2aca5b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,14 @@
         ]
     },
     "default": {
+        "appnope": {
+            "hashes": [
+                "sha256:1de3860566df9caf38f01f86f65e0e13e379af54f9e4bee1e66b48f2efffd1ee",
+                "sha256:502575ee11cd7a28c0205f379b525beefebab9d161b7c964670864014ed7213c"
+            ],
+            "index": "pypi",
+            "version": "==0.1.4"
+        },
         "asttokens": {
             "hashes": [
                 "sha256:051ed49c3dcae8913ea7cd08e46a606dba30b79993209636c4875bc1d637bc24",
@@ -187,7 +195,6 @@
                 "sha256:50384f5c577a260a1d53f1f59a828c7266d321c9b7d00d345693783f66616055"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.8'",
             "version": "==6.29.2"
         },
         "ipython": {
@@ -364,7 +371,6 @@
                 "sha256:fa93695d5c08544f4a0dfd0965f378e7afc410d8672816aff1e81be1f45dbf2e"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.9'",
             "version": "==3.8.3"
         },
         "matplotlib-inline": {
@@ -423,7 +429,6 @@
                 "sha256:ffa75af20b44f8dba823498024771d5ac50620e6915abac414251bd971b4529f"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.9'",
             "version": "==1.26.4"
         },
         "opencv-python": {
@@ -437,7 +442,6 @@
                 "sha256:e4088cab82b66a3b37ffc452976b14a3c599269c247895ae9ceb4066d8188a57"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.6'",
             "version": "==4.9.0.80"
         },
         "packaging": {
@@ -481,7 +485,6 @@
                 "sha256:fbc1b53c0e1fdf16388c33c3cca160f798d38aea2978004dd3f4d3dec56454c9"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.9'",
             "version": "==2.2.0"
         },
         "parso": {
@@ -587,7 +590,7 @@
                 "sha256:3527b7af26106cbc65a040bcc84839a3566ec1b051bb0bfe953631e704b0ff7d",
                 "sha256:a11a29cb3bf0a28a387fe5122cdb649816a957cd9261dcedf8c9f1fef33eacf6"
             ],
-            "markers": "python_full_version >= '3.7.0'",
+            "markers": "python_version >= '3.7'",
             "version": "==3.0.43"
         },
         "psutil": {
@@ -666,7 +669,6 @@
                 "sha256:fe0ec198ccc680f6c92723fadcb97b74f07c45ff3fdec9dd765deb04955ccf19"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.8'",
             "version": "==15.0.0"
         },
         "pygments": {
