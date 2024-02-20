@@ -54,7 +54,7 @@ def convert(args):
     
     
     cocoTrainPath = os.path.join(path, "cocoLabels.json")
-    coco = {"image": [], "annotation": [], "categories": [{"supercategory": "pothole", "id": 0, "name": "pothole"}]}
+    coco = {"image": [], "annotation": [], "categories": [{"supercategory": "pothole", "id": 1, "name": "pothole"}]}
 
 
     for _, row in trainDF.iterrows():
@@ -82,7 +82,7 @@ def convert(args):
                 coco["annotation"].append({
                     "image_id": row["imageFile"],
                     "bbox": bbox,
-                    "category_id": 0,
+                    "category_id": coco["categories"][0]["id"],
                     "segmentation": seg,
                 })
     image = None
