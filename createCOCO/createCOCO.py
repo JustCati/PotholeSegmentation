@@ -58,6 +58,7 @@ def convert(args):
     coco = {"images": [], "annotations": [], "categories": [{"supercategory": "pothole", "id": 1, "name": "pothole"}]}
 
 
+    annID = 0
     for _, row in trainDF.iterrows():
         image = cv.imread(os.path.join(imagePath, row["imageFile"] + ".jpg"))
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
@@ -81,12 +82,14 @@ def convert(args):
                 seg = [p * xlim if i % 2 == 0 else p * ylim for i, p in enumerate(seg)]
 
                 coco["annotations"].append({
+                    "id": annID,
                     "image_id": row["imageFile"],
                     "bbox": bbox,
                     "bbox_mode": BoxMode.XYWH_ABS,
                     "category_id": coco["categories"][0]["id"],
-                    "segmentation": seg,
+                    "segmentation": [seg],
                 })
+                annID += 1
     image = None
     
     with open(cocoTrainPath, "w") as f:
