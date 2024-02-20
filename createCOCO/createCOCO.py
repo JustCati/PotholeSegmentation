@@ -5,6 +5,7 @@ import math
 import argparse
 import cv2 as cv
 import pandas as pd
+from detectron2.structures import BoxMode
 
 
 parser = argparse.ArgumentParser(description='Script for conversion of YoloV8 labels to COCO format.')
@@ -54,7 +55,7 @@ def convert(args):
     
     
     cocoTrainPath = os.path.join(path, "cocoLabels.json")
-    coco = {"image": [], "annotation": [], "categories": [{"supercategory": "pothole", "id": 1, "name": "pothole"}]}
+    coco = {"images": [], "annotations": [], "categories": [{"supercategory": "pothole", "id": 1, "name": "pothole"}]}
 
 
     for _, row in trainDF.iterrows():
@@ -63,7 +64,7 @@ def convert(args):
         xlim = math.ceil(image.shape[1])
         ylim = math.ceil(image.shape[0])
 
-        coco["image"].append({
+        coco["images"].append({
             "id": row["imageFile"],
             "width": xlim,
             "height": ylim,
@@ -79,9 +80,10 @@ def convert(args):
                 seg = [float(p) for p in line.strip().split(" ")[1:]]
                 seg = [p * xlim if i % 2 == 0 else p * ylim for i, p in enumerate(seg)]
 
-                coco["annotation"].append({
+                coco["annotations"].append({
                     "image_id": row["imageFile"],
                     "bbox": bbox,
+                    "bbox_mode": BoxMode.XYWH_ABS,
                     "category_id": coco["categories"][0]["id"],
                     "segmentation": seg,
                 })
