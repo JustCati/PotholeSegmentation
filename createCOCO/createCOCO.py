@@ -86,6 +86,8 @@ def convert(args):
                     "image_id": row["imageFile"],
                     "bbox": bbox,
                     "bbox_mode": BoxMode.XYWH_ABS,
+                    "iscrowd": 0,
+                    "area": bbox[2] * bbox[3],
                     "category_id": coco["categories"][0]["id"],
                     "segmentation": [seg],
                 })
