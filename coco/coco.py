@@ -4,7 +4,6 @@ import math
 import argparse
 import cv2 as cv
 import pandas as pd
-from matplotlib import pyplot as plt
 from detectron2.structures import BoxMode
 
 
@@ -14,28 +13,6 @@ parser.add_argument("--split", type=str, default="train", help="Target directory
 parser.add_argument("--target", type=str, default="images", help="Target directory (images, videos)", choices=["images", "videos"])
 args = parser.parse_args()
 
-
-def plotSample(dataset, imagePath, labelsPath):
-    dataset = dataset.sample(frac=1).reset_index(drop=True)
-    for _, row in dataset.iterrows():
-        image = cv.imread(os.path.join(imagePath, row["imageFile"] + ".jpg"))
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        implot = plt.imshow(image)
-
-        #* 640 x 640
-        xlim = math.ceil(image.shape[1])
-        ylim = math.ceil(image.shape[0])
-
-        with open(os.path.join(labelsPath, row["labelFile"] + ".txt"), "r") as f:
-            lines = f.readlines()
-            for line in lines:
-                line = [float(line) for line in line.strip().split(" ")[1:]]
-                xs, ys = [], []
-                for i in range(len(line)):
-                    xs.append(line[i] * xlim) if i % 2 == 0 else ys.append(line[i] * ylim)
-                plt.scatter(xs, ys, color="red")
-        plt.show()
-        break
 
 
 def seg_to_bbox(seg_info):
@@ -50,7 +27,6 @@ def generateJSON(args):
     path = args.path
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
-
 
     path = os.path.join(path, args.target, args.split)
     if not os.path.exists(path):
@@ -115,7 +91,7 @@ def generateJSON(args):
                 annID += 1
         imgID += 1
     image = None
-    
+
     with open(cocoTrainPath, "w") as f:
         json.dump(coco, f)
 
