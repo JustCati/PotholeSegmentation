@@ -1,7 +1,6 @@
 import os
 import argparse
-from createCOCO.createCOCO import convert
-
+from coco.coco import generateJSON, plotSample
 
 
 
@@ -22,7 +21,7 @@ def main():
 
     cocoPath = os.path.join(path, "cocoLabels.json")
     if not os.path.exists(cocoPath):
-        convert(args)
+        generateJSON(args)
 
 
 
