@@ -7,12 +7,6 @@ import pandas as pd
 from detectron2.structures import BoxMode
 
 
-parser = argparse.ArgumentParser(description='Script for conversion of YoloV8 labels to COCO format.')
-parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
-parser.add_argument("--split", type=str, default="train", help="Target directory (train, test, val)", choices=["train", "test", "val"])
-parser.add_argument("--target", type=str, default="images", help="Target directory (images, videos)", choices=["images", "videos"])
-args = parser.parse_args()
-
 
 
 def seg_to_bbox(seg_info):
@@ -99,4 +93,10 @@ def generateJSON(args):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Script for conversion of YoloV8 labels to COCO format.')
+    parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
+    parser.add_argument("--split", type=str, default="train", help="Target directory (train, test, val)", choices=["train", "test", "val"])
+    parser.add_argument("--target", type=str, default="images", help="Target directory (images, videos)", choices=["images", "videos"])
+    args = parser.parse_args()
+
     generateJSON(args)
