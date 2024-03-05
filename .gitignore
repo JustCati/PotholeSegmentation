@@ -1,6 +1,7 @@
 # Own
 data/*
 output/*
+OUTPUT/*
 
 # General
 .DS_Store
