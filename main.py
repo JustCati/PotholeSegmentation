@@ -59,6 +59,10 @@ def main():
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
 
+    modelOutputPath = args.output
+    if not os.path.exists(modelOutputPath):
+        os.makedirs(modelOutputPath)
+
     trainPath, trainCocoPath = generateCoco(path, args, "train")
     valPath, valCocoPath = generateCoco(path, args, "val")
     trainPath = os.path.join(trainPath, "images")
