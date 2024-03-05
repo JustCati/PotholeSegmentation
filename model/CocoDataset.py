@@ -39,10 +39,7 @@ class CocoDataset(data.Dataset):
             boxes.append([xmin, ymin, xmax, ymax])
 
         areas = [target[i]['area'] for i in range(nums)]
-        masks = []
-        for i in range(nums):
-            masks.append(coco.annToMask(target[i]))
-        masks = np.array(masks)
+        masks = np.array([coco.annToMask(target[i]) for i in range(nums)])
 
         img_id = torch.tensor([img_id])
         labels = torch.ones((nums,), dtype=torch.int64)
