@@ -100,6 +100,7 @@ urllib3 = "==2.2.1"
 wcwidth = "==0.2.13"
 werkzeug = "==3.0.1"
 yacs = "==0.1.8"
+pyqt6 = "*"
 
 [dev-packages]
 torch-tb-profiler = "*"
