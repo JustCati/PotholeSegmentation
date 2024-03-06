@@ -47,6 +47,18 @@ def generateCoco(path, args, split="train"):
     return splitPath, cocoPath
 
 
+def getDevice():
+    device = None
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+    elif torch.backends.mps.is_available():
+        device = torch.device('mps')
+    else:
+        device = torch.device('cpu')
+    return device
+
+
+
 def main():
     parser = argparse.ArgumentParser(description="Pothole Segmentation")
     parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
@@ -92,7 +104,7 @@ def main():
 
     EPOCHS = 20
 
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = getDevice()
     model = getModel(pretrained = True, device = device)
     model.to(device)
 
