@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a90c8866d5e8b5d1e5a3cfafebd41baa060fa27f8b06d9547acb1e32bab7eeb0"
+            "sha256": "76bbcd8b8c86a702c4579600a088ec8bf06593b20c141bf4e50a2bb2e54c927b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -308,10 +308,6 @@
             "index": "pypi",
             "markers": "python_version >= '3.5'",
             "version": "==5.1.1"
-        },
-        "detectron2": {
-            "git": "git+https://github.com/facebookresearch/detectron2.git",
-            "ref": "3ff5dd1cff4417af07097064813c9f28d7461d3c"
         },
         "executing": {
             "hashes": [

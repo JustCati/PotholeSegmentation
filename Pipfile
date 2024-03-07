@@ -27,7 +27,6 @@ contourpy = "==1.2.0"
 cycler = "==0.12.1"
 debugpy = "==1.8.1"
 decorator = "==5.1.1"
-detectron2 = {ref = "3ff5dd1cff4417af07097064813c9f28d7461d3c", git = "git+https://github.com/facebookresearch/detectron2.git"}
 executing = "==2.0.1"
 filelock = "==3.13.1"
 fonttools = "==4.49.0"
