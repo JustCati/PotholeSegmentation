@@ -3,16 +3,19 @@ import json
 import random
 import argparse
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 import torch
 from torch.utils import data
 from torchvision import transforms
+from torchvision.transforms import v2 as T
 
 from coco.coco import generateJSON
 from model.CocoDataset import CocoDataset
 from model.model import getModel, trainModel
+
 
 
 
@@ -22,8 +25,10 @@ def plotSample(dataset):
     
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
+    plt.imshow(np.zeros((640, 640)), interpolation='none')
     for i in range(len(target["masks"])):
-        plt.imshow(target["masks"][i], cmap='gray', alpha=0.5, interpolation='none')
+        alpha = 0.5 * (target["masks"][i] > 0)
+        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
     plt.axis('off')
 
     plt.subplot(1, 2, 2)
@@ -32,6 +37,10 @@ def plotSample(dataset):
     for i in range(len(target['boxes'])):
         box = target['boxes'][i]
         plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
+
+    for i in range(len(target["masks"])):
+        alpha = 0.5 * (target["masks"][i] > 0)
+        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
     plt.show()
 
 
@@ -63,8 +72,9 @@ def main():
     parser = argparse.ArgumentParser(description="Pothole Segmentation")
     parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
     parser.add_argument("--target", type=str, default="images", help="Target directory (images, videos)", choices=["images", "videos"])
-    parser.add_argument("--plot", action="store_true", default=False, help="Plot a sample image from the dataset")
+    parser.add_argument("--plot", action="store_true", default=False, help="Plot a sample image from the dataset with ground truth masks")
     parser.add_argument("--output", type=str, default=os.path.join(os.getcwd(), "OUTPUT"), help="Output directory for model saving")
+    parser.add_argument("--demo", action="store_true", default=False, help="Run a demo of inference on a random image from the validation set")
     args = parser.parse_args()
 
 
@@ -88,9 +98,17 @@ def main():
 
     #* --------------- Create Dataset -----------------
 
-    BATCH_SIZE = 3
+    
+    transform = T.Compose([
+        T.RandomHorizontalFlip(0.5),
+        T.RandomVerticalFlip(0.5),
+        T.RandomRotation(random.randint(0, 360)),
+        T.GaussianBlur((5, 9), (0.1, 5))  
+    ])
+    train, val = CocoDataset(trainPath, trainCocoPath, transforms=transform), CocoDataset(valPath, valCocoPath, transforms=transform)
 
-    train, val = CocoDataset(trainPath, trainCocoPath), CocoDataset(valPath, valCocoPath)
+
+    BATCH_SIZE = 3
     trainDataloader = data.DataLoader(train, batch_size = BATCH_SIZE, num_workers = 8, pin_memory = True, shuffle = True, collate_fn = lambda x: tuple(zip(*x)))
     valDataloader = data.DataLoader(val, batch_size = BATCH_SIZE, num_workers = 8, pin_memory = True, shuffle = True, collate_fn = lambda x: tuple(zip(*x)))
 
@@ -111,9 +129,9 @@ def main():
     if not os.path.exists(os.path.join(modelOutputPath, "model.pth")):
         print("\nTraining model")
 
-        params = [p for p in model.parameters() if p.requires_grad]
-        optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
+        # params = [p for p in model.parameters() if p.requires_grad]
+        # optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=0.001)
+        # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2)
 
         model, losses = trainModel(model, trainDataloader, optimizer, lr_scheduler, EPOCHS, path = modelOutputPath, device = device)
         print("Average Loss: ", sum([value["total_loss"] for value in losses[0] if isinstance(value, dict)]) / len(losses))
@@ -127,7 +145,7 @@ def main():
 
     #* --------------- Plot inferenced example -----------------
 
-    if args.plot:
+    if args.demo:
         (img, target) = val[random.randint(0, len(val) - 1)]
 
         model.eval()
