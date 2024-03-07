@@ -36,7 +36,7 @@ def plotSample(dataset):
     plt.imshow(transforms.ToPILImage()(img))
     for i in range(len(target['boxes'])):
         box = target['boxes'][i]
-        plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
+        plt.gca().add_patch(Rectangle((box[0], box[1]), box[2], box[3], linewidth=1, edgecolor='w', facecolor='none'))
 
     for i in range(len(target["masks"])):
         alpha = 0.5 * (target["masks"][i] > 0)
@@ -114,6 +114,7 @@ def main():
 
     if args.plot:
         plotSample(train)
+        exit()
 
     #* ----------------------------------------------------
 
@@ -129,9 +130,9 @@ def main():
     if not os.path.exists(os.path.join(modelOutputPath, "model.pth")):
         print("\nTraining model")
 
-        # params = [p for p in model.parameters() if p.requires_grad]
-        # optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=0.001)
-        # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2)
+        params = [p for p in model.parameters() if p.requires_grad]
+        optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=0.001)
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2)
 
         model, losses = trainModel(model, trainDataloader, optimizer, lr_scheduler, EPOCHS, path = modelOutputPath, device = device)
         print("Average Loss: ", sum([value["total_loss"] for value in losses[0] if isinstance(value, dict)]) / len(losses))

@@ -64,6 +64,10 @@ class CocoDataset(VisionDataset):
         if self.transforms is not None:
             img, target = self.transforms(img, target)
 
+        for i in range(len(target["boxes"])):
+            box = target["boxes"][i]
+            target["boxes"][i] = torch.as_tensor([box[0], box[1], box[2] - box[0], box[3] - box[1]], dtype=torch.float32)
+
         return img, target
 
 
