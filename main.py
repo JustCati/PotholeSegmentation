@@ -36,7 +36,7 @@ def plotSample(dataset):
     plt.imshow(transforms.ToPILImage()(img))
     for i in range(len(target['boxes'])):
         box = target['boxes'][i]
-        plt.gca().add_patch(Rectangle((box[0], box[1]), box[2], box[3], linewidth=1, edgecolor='w', facecolor='none'))
+        plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
 
     for i in range(len(target["masks"])):
         alpha = 0.5 * (target["masks"][i] > 0)
@@ -98,11 +98,11 @@ def main():
 
     #* --------------- Create Dataset -----------------
 
-    
+
     transform = T.Compose([
         T.RandomHorizontalFlip(0.5),
         T.RandomVerticalFlip(0.5),
-        T.GaussianBlur((5, 9), (0.1, 5))
+        T.GaussianBlur((5, 9), (0.1, 5)),
     ])
     train, val = CocoDataset(trainPath, trainCocoPath, transforms=transform), CocoDataset(valPath, valCocoPath, transforms=transform)
 
