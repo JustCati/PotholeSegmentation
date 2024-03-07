@@ -125,8 +125,9 @@ def main():
     EPOCHS = 20
 
     device = getDevice()
-    model = getModel(pretrained = True, device = device)
-    model.to(device)
+    trainLosses, valLosses = None, None
+
+    model = getModel(pretrained = True, device = device).to(device)
 
     if not os.path.exists(os.path.join(modelOutputPath, "model.pth")):
         print("\nTraining model")
@@ -135,12 +136,26 @@ def main():
         optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=0.001)
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2)
 
-        model, losses = trainModel(model, trainDataloader, optimizer, lr_scheduler, EPOCHS, path = modelOutputPath, device = device)
-        print("Average Loss: ", sum([value["total_loss"] for value in losses[0] if isinstance(value, dict)]) / len(losses))
+        model, trainLosses, valAccuracy = trainModel(model,
+                                                   trainDataloader, 
+                                                   valDataloader, 
+                                                   optimizer, 
+                                                   lr_scheduler,
+                                                   EPOCHS,
+                                                   path = modelOutputPath,
+                                                   device = device)
+
+        print("Average Train Loss: ", sum([value["total_loss"] for value in trainLosses[0] if isinstance(value, dict)]) / len(trainLosses))
+        print("Average Validation Loss: ", sum([value["total_loss"] for value in valLosses[0] if isinstance(value, dict)]) / len(valLosses))
+    
     else:
+        print("\nLoading model")
+
         model.load_state_dict(torch.load(os.path.join(modelOutputPath, "model.pth")))
-        with open(os.path.join(modelOutputPath, "losses.json"), "r") as f:
-            losses = json.load(f)
+        with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
+            trainLosses = json.load(f)
+        with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
+            valAccuracy = json.load(f)
 
     #* ----------------------------------------------------
 
@@ -159,6 +174,13 @@ def main():
         plt.figure(figsize=(10, 5))
         plt.subplot(1, 2, 1)
         plt.imshow(transforms.ToPILImage()(img))
+        for i in range(len(target['boxes'])):
+            box = target['boxes'][i]
+            plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
+        for i in range(len(target["masks"])):
+            alpha = 0.5 * (target["masks"][i] > 0)
+            plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
+        
 
         plt.subplot(1, 2, 2)
         plt.imshow(transforms.ToPILImage()(img))
@@ -166,14 +188,13 @@ def main():
             box = target['boxes'][i]
             plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
 
-        #TODO: CHANGE BOX TO BE THE VERTICES OF SEGMENTATED MASK
         for i in range(len(prediction['boxes'])):
             if prediction['scores'][i] > 0.7 and prediction['labels'][i] == 1: #? Filter out non-potholes
                 box = prediction['boxes'][i]
                 plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='r', facecolor='none'))
 
         for i in range(len(target["masks"])):
-            alpha = 0.5 * (target["masks"][i] > 0)
+            alpha = 0.9 * (target["masks"][i] > 0)
             plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
 
         plt.show()
@@ -182,14 +203,17 @@ def main():
     
     #* --------------- Plot losses -----------------
 
-    if losses is None:
-        if not os.path.exists(os.path.join(modelOutputPath, "losses.json")):
+    if trainLosses is None and valAccuracy is None:
+        if not os.path.exists(os.path.join(modelOutputPath, "losses.json")) or not os.path.exists(os.path.join(modelOutputPath, "valLosses.json")):
             raise ValueError("Losses file not found")
-        with open(os.path.join(modelOutputPath, "losses.json"), "r") as f:
-            total_losses = json.load(f)
+        with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
+            trainLosses = json.load(f)
+        with open(os.path.join(modelOutputPath, "valAccuracy.json"), "r") as f:
+            valAccuracy = json.load(f)
 
     plt.figure(figsize=(10, 5))
-    total_losses = sorted(losses, key=lambda x: x[0])
+    plt.subplot(1, 2, 1)
+    total_losses = sorted(trainLosses, key=lambda x: x[0])
     plt.plot([loss["total_loss"] for _, loss in total_losses], label="Total Loss")
     plt.plot([loss["loss_mask"] for _, loss in total_losses], label="Mask Loss")
     plt.plot([loss["loss_box_reg"] for _, loss in total_losses], label="Box Loss")
@@ -197,10 +221,27 @@ def main():
     plt.scatter([i for i, _ in total_losses], [loss["loss_mask"] for _, loss in total_losses], color="red")
     plt.scatter([i for i, _ in total_losses], [loss["loss_box_reg"] for _, loss in total_losses], color="red")
     
-    plt.title("Losses")
+    plt.title("Train Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.legend()
+
+    plt.subplot(1, 2, 2)
+    accuracy = sorted(valAccuracy, key=lambda x: x[0])
+    plt.plot([acc["map"] for _, acc in accuracy], label="mAP")
+    plt.plot([acc["iou"] for _, acc in accuracy], label="IoU")
+    plt.plot([acc["map_50"] for _, acc in accuracy], label="mAP@50")
+    plt.plot([acc["map_75"] for _, acc in accuracy], label="mAP@75")
+
+    plt.scatter([i for i, _ in accuracy], [acc["map_50"] for _, acc in accuracy], color="red")
+    plt.scatter([i for i, _ in accuracy], [acc["map_75"] for _, acc in accuracy], color="red")
+    plt.scatter([i for i, _ in accuracy], [acc["iou"] for _, acc in accuracy], color="red")
+    plt.scatter([i for i, _ in accuracy], [acc["map"] for _, acc in accuracy], color="red")
+    plt.title("Validation Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("mAP")
+    plt.legend()
+
     plt.show()
 
     #* ----------------------------------------------------

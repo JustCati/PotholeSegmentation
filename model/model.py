@@ -1,9 +1,14 @@
 import os
 import json
 import torch
+
+from torchmetrics.detection.iou import IntersectionOverUnion as IoU
+from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
+
 from torchvision.models.detection import maskrcnn_resnet50_fpn_v2
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+
 
 
 
@@ -33,6 +38,7 @@ def getModel(pretrained = True, weights = "DEFAULT", backbone_weights = "DEFAULT
 
 def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
     total_losses = []
+
     for images, targets in loader:
         images = list([image.to(device) for image in images])
         targets = [{k: v.to(device) for k, v in elem.items()} for elem in targets]
@@ -54,23 +60,50 @@ def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
 
 
 
-def trainModel(model, loader, optimizer, lr_scheduler, n_epoch, path = os.getcwd(), device = None):
-    losses = []
-    best_loss = float("inf")
+def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, path = os.getcwd(), device = None):
+    val_accuracy = []
+    train_losses = []
+    best_val_acc = float("-inf")
 
-    model.train()
     for epoch in range(n_epoch):
-        ep_loss = train_one_epoch(model, loader, optimizer, lr_scheduler, device)
+        #* Train the model
+        model.train()
+        train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, device)
+        train_losses.append((epoch, train_loss))
 
-        loss = ep_loss["total_loss"]
-        if loss < best_loss:
-            best_loss = loss
+        #* Evaluate the model
+        model.eval()
+        with torch.no_grad():
+            for images, targets in valLoader:
+                images = list([image.to(device) for image in images])
+                targets = [{k: v.to(device) for k, v in elem.items()} for elem in targets]
+
+                pred = model(images)
+
+                map = MAP(box_format="xyxy", iou_type="bbox")
+                iou = IoU(box_format="xyxy", iou_threshold=0.5)
+
+                map.update(pred, targets)
+                iou.update(pred, targets)
+
+                val_acc = {}
+                val_acc.update(map.compute())
+                val_acc.update(iou.compute())
+                val_acc = {k: v.item() for k, v in val_acc.items()}
+
+                val_accuracy.append((epoch, val_acc))
+
+        accuracy = val_acc["map"]
+        if accuracy > best_val_acc:
+            best_val_acc = accuracy
             torch.save(model.state_dict(), os.path.join(path, "model.pth"))
 
-        print(f"Epoch {epoch + 1} Total Loss: {loss}")
-        losses.append((epoch, ep_loss))
+        print(f"Epoch {epoch + 1} Training Loss: {train_loss['total_loss']}, Validation Accuracy (mAP): {val_acc['map']}")
+
 
     model.load_state_dict(torch.load(os.path.join(path, "model.pth")))
-    with open(os.path.join(path, "losses.json"), "w") as f:
-        json.dump(losses, f)
-    return model, losses
+    with open(os.path.join(path, "TrainLosses.json"), "w") as f:
+        json.dump(train_losses, f)
+    with open(os.path.join(path, "ValAccuracy.json"), "w") as f:
+        json.dump(val_accuracy, f)
+    return model, train_losses, val_accuracy
