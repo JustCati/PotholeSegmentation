@@ -102,8 +102,7 @@ def main():
     transform = T.Compose([
         T.RandomHorizontalFlip(0.5),
         T.RandomVerticalFlip(0.5),
-        T.RandomRotation(random.randint(0, 360)),
-        T.GaussianBlur((5, 9), (0.1, 5))  
+        T.GaussianBlur((5, 9), (0.1, 5))
     ])
     train, val = CocoDataset(trainPath, trainCocoPath, transforms=transform), CocoDataset(valPath, valCocoPath, transforms=transform)
 
@@ -114,7 +113,9 @@ def main():
 
     if args.plot:
         plotSample(train)
-        exit()
+        choice = input("Continue? [Y/n]: ")
+        if choice.lower() == "n":
+            return
 
     #* ----------------------------------------------------
 

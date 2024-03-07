@@ -35,12 +35,7 @@ class CocoDataset(VisionDataset):
 
         #* Load and convert to tensor the annotations
         nums = len(target)
-        boxes = []
-        for i in range(nums):
-            xmin, ymin, width, height = target[i]['bbox']
-            xmax = xmin + width
-            ymax = ymin + height
-            boxes.append([xmin, ymin, xmax, ymax])
+        boxes = [target[i]['bbox'] for i in range(nums)]
 
         areas = [target[i]['area'] for i in range(nums)]
         masks = np.array([coco.annToMask(target[i]) for i in range(nums)])
@@ -49,7 +44,7 @@ class CocoDataset(VisionDataset):
         labels = torch.ones((nums,), dtype=torch.int64)
         is_crowd = torch.zeros((nums,), dtype=torch.int64)
         areas = torch.as_tensor(areas, dtype=torch.float32)
-        boxes = tv_tensors.BoundingBoxes(boxes, format='xyxy', canvas_size=img.shape[-2:])
+        boxes = tv_tensors.BoundingBoxes(boxes, format='XYWH', canvas_size=img.shape[-2:])
         masks = tv_tensors.Mask(masks)
 
         target = {
@@ -63,10 +58,6 @@ class CocoDataset(VisionDataset):
 
         if self.transforms is not None:
             img, target = self.transforms(img, target)
-
-        for i in range(len(target["boxes"])):
-            box = target["boxes"][i]
-            target["boxes"][i] = torch.as_tensor([box[0], box[1], box[2] - box[0], box[3] - box[1]], dtype=torch.float32)
 
         return img, target
 
