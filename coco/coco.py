@@ -4,7 +4,6 @@ import math
 import argparse
 import cv2 as cv
 import pandas as pd
-from detectron2.structures import BoxMode
 
 
 
@@ -76,7 +75,7 @@ def generateJSON(args):
                     "id": annID,
                     "image_id": imgID,
                     "bbox": bbox,
-                    "bbox_mode": BoxMode.XYWH_ABS,
+                    "bbox_mode": "XYWH",
                     "iscrowd": 0,
                     "area": bbox[2] * bbox[3],
                     "category_id": coco["categories"][0]["id"],
