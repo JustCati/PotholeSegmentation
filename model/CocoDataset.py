@@ -5,60 +5,30 @@ from PIL import Image
 import torch
 from torch.utils import data
 from torchvision import transforms
+from torchvision.datasets import CocoDetection
 
 from pycocotools.coco import COCO
 
 
 
 
-class CocoDataset(data.Dataset):
-    def __init__(self, path, annFile):
-        self.root = path
+class CocoDataset(CocoDetection):
+    def __init__(self, root, annFile, transform = None, target_transform = None, transforms = None):
+        super(CocoDataset, self).__init__(root, annFile, transform, target_transform, transforms)
+
+        self.root = root
         self.coco = COCO(annFile)
         self.ids = list(self.coco.imgs.keys())
+        self.transform = transform
+        self.target_transform = target_transform
+
 
     def __getitem__(self, index):
-        coco = self.coco
-        img_id = self.ids[index]
-        ann_ids = coco.getAnnIds(imgIds=img_id)
-        target = coco.loadAnns(ann_ids)
+        image, target = super(CocoDataset, self).__getitem__(index)
+        image = transforms.ToTensor()(image)
 
-
-        #* Load the image
-        path = coco.loadImgs(img_id)[0]['file_name']
-        img = Image.open(os.path.join(self.root, path)).convert('RGB')
-        img = transforms.ToTensor()(img)
-
-
-        #* Load and convert to tensor the annotations
+        #* Add Masks to the target
         nums = len(target)
-        boxes = []
         for i in range(nums):
-            xmin, ymin, width, height = target[i]['bbox']
-            xmax = xmin + width
-            ymax = ymin + height
-            boxes.append([xmin, ymin, xmax, ymax])
-
-        areas = [target[i]['area'] for i in range(nums)]
-        masks = np.array([coco.annToMask(target[i]) for i in range(nums)])
-
-        img_id = torch.tensor([img_id])
-        labels = torch.ones((nums,), dtype=torch.int64)
-        is_crowd = torch.zeros((nums,), dtype=torch.int64)
-        boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        areas = torch.as_tensor(areas, dtype=torch.float32)
-        masks = torch.as_tensor(masks, dtype=torch.float32)
-
-        target = {
-            "image_id": img_id,
-            "labels": labels,
-            "area": areas,
-            "iscrowd": is_crowd,
-            "boxes": boxes,
-            "masks": masks
-        }
-        return img, target
-
-
-    def __len__(self):
-        return len(self.ids)
+            target[i]["mask"] = torch.as_tensor(self.coco.annToMask(target[i]), dtype=torch.float32)
+        return image, target
