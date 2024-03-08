@@ -3,52 +3,27 @@ import json
 import random
 import argparse
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
-
 import torch
 from torch.utils import data
-from torchvision import transforms
 from torchvision.transforms import v2 as T
 
 from coco.coco import generateJSON
-from model.CocoDataset import CocoDataset
 from model.model import getModel, trainModel
 
+from utils.transform import GaussianNoise
+from utils.CocoDataset import CocoDataset
+from utils.graphs import plotSample, plotDemo, plotPerf
 
 
 
 
-def plotSample(dataset):
-    (img, target) = dataset[random.randint(0, len(dataset))]
-    
-    plt.figure(figsize=(10, 5))
-    plt.subplot(1, 2, 1)
-    plt.imshow(np.zeros((640, 640)), interpolation='none')
-    for i in range(len(target["masks"])):
-        alpha = 0.5 * (target["masks"][i] > 0)
-        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
-    plt.axis('off')
-
-    plt.subplot(1, 2, 2)
-    plt.axis('off')
-    plt.imshow(transforms.ToPILImage()(img))
-    for i in range(len(target['boxes'])):
-        box = target['boxes'][i]
-        plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
-
-    for i in range(len(target["masks"])):
-        alpha = 0.5 * (target["masks"][i] > 0)
-        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
-    plt.show()
 
 
 def generateCoco(path, args, split="train"):
     splitPath = os.path.join(path, split)
     if not os.path.exists(splitPath):
         raise ValueError(f"Path {splitPath} does not exist")
-    
+
     cocoPath = os.path.join(splitPath, "cocoLabels.json")
     if not os.path.exists(cocoPath):
         args.__dict__["split"] = split
@@ -98,14 +73,13 @@ def main():
 
     #* --------------- Create Dataset -----------------
 
-
     transform = T.Compose([
         T.RandomHorizontalFlip(0.5),
         T.RandomVerticalFlip(0.5),
         T.GaussianBlur((5, 9), (0.1, 5)),
+        # GaussianNoise(p = 0.5, mean = 0, sigma = 50)
     ])
-    train, val = CocoDataset(trainPath, trainCocoPath, transforms=transform), CocoDataset(valPath, valCocoPath, transforms=transform)
-
+    train, val = CocoDataset(trainPath, trainCocoPath, transforms = transform), CocoDataset(valPath, valCocoPath)
 
     BATCH_SIZE = 3
     trainDataloader = data.DataLoader(train, batch_size = BATCH_SIZE, num_workers = 8, pin_memory = True, shuffle = True, collate_fn = lambda x: tuple(zip(*x)))
@@ -113,8 +87,8 @@ def main():
 
     if args.plot:
         plotSample(train)
-        choice = input("Continue? [Y/n]: ")
-        if choice.lower() == "n":
+        choice = input("Continue? [y/N]: ")
+        if choice.lower() == "y" or choice == "":
             return
 
     #* ----------------------------------------------------
@@ -122,11 +96,9 @@ def main():
 
     #* --------------- Train Model -----------------
 
-    EPOCHS = 20
-
+    EPOCHS = 10
     device = getDevice()
-    trainLosses, valLosses = None, None
-
+    trainLosses, valAccuracy = None, None
     model = getModel(pretrained = True, device = device).to(device)
 
     if not os.path.exists(os.path.join(modelOutputPath, "model.pth")):
@@ -145,17 +117,21 @@ def main():
                                                    path = modelOutputPath,
                                                    device = device)
 
-        print("Average Train Loss: ", sum([value["total_loss"] for value in trainLosses[0] if isinstance(value, dict)]) / len(trainLosses))
-        print("Average Validation Loss: ", sum([value["total_loss"] for value in valLosses[0] if isinstance(value, dict)]) / len(valLosses))
-    
+        averageLoss = sum([v["total_loss"] for _, v in trainLosses.items()]) / len(trainLosses)
+        averageMap = sum([v["map"] for _, v in valAccuracy.items()]) / len(valAccuracy)
+        print("Average Train Loss: ", averageLoss)
+        print("Average Validation mAP: ", averageMap)
+
     else:
         print("\nLoading model")
 
         model.load_state_dict(torch.load(os.path.join(modelOutputPath, "model.pth")))
-        with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
-            trainLosses = json.load(f)
-        with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
-            valAccuracy = json.load(f)
+        if os.path.exists(os.path.join(modelOutputPath, "TrainLosses.json")):
+            with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
+                trainLosses = json.load(f)
+        if os.path.exists(os.path.join(modelOutputPath, "ValAccuracy.json")):
+            with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
+                valAccuracy = json.load(f)
 
     #* ----------------------------------------------------
 
@@ -170,37 +146,11 @@ def main():
             prediction = model([img.to(device)])
             prediction = {k: v.to("cpu") for k, v in prediction[0].items()}
 
-        plt.axis('off')
-        plt.figure(figsize=(10, 5))
-        plt.subplot(1, 2, 1)
-        plt.imshow(transforms.ToPILImage()(img))
-        for i in range(len(target['boxes'])):
-            box = target['boxes'][i]
-            plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
-        for i in range(len(target["masks"])):
-            alpha = 0.5 * (target["masks"][i] > 0)
-            plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
-        
-
-        plt.subplot(1, 2, 2)
-        plt.imshow(transforms.ToPILImage()(img))
-        for i in range(len(target['boxes'])):
-            box = target['boxes'][i]
-            plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
-
-        for i in range(len(prediction['boxes'])):
-            if prediction['scores'][i] > 0.7 and prediction['labels'][i] == 1: #? Filter out non-potholes
-                box = prediction['boxes'][i]
-                plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='r', facecolor='none'))
-
-        for i in range(len(target["masks"])):
-            alpha = 0.9 * (target["masks"][i] > 0)
-            plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
-
-        plt.show()
+        plotDemo(img, target, prediction)
 
     #* ----------------------------------------------------
-    
+
+
     #* --------------- Plot losses -----------------
 
     if trainLosses is None and valAccuracy is None:
@@ -208,43 +158,16 @@ def main():
             raise ValueError("Losses file not found")
         with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
             trainLosses = json.load(f)
-        with open(os.path.join(modelOutputPath, "valAccuracy.json"), "r") as f:
+        with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
             valAccuracy = json.load(f)
 
-    plt.figure(figsize=(10, 5))
-    plt.subplot(1, 2, 1)
-    total_losses = sorted(trainLosses, key=lambda x: x[0])
-    plt.plot([loss["total_loss"] for _, loss in total_losses], label="Total Loss")
-    plt.plot([loss["loss_mask"] for _, loss in total_losses], label="Mask Loss")
-    plt.plot([loss["loss_box_reg"] for _, loss in total_losses], label="Box Loss")
-    plt.scatter([i for i, _ in total_losses], [loss["total_loss"] for _, loss in total_losses], color="red")
-    plt.scatter([i for i, _ in total_losses], [loss["loss_mask"] for _, loss in total_losses], color="red")
-    plt.scatter([i for i, _ in total_losses], [loss["loss_box_reg"] for _, loss in total_losses], color="red")
-    
-    plt.title("Train Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    accuracy = sorted(valAccuracy, key=lambda x: x[0])
-    plt.plot([acc["map"] for _, acc in accuracy], label="mAP")
-    plt.plot([acc["iou"] for _, acc in accuracy], label="IoU")
-    plt.plot([acc["map_50"] for _, acc in accuracy], label="mAP@50")
-    plt.plot([acc["map_75"] for _, acc in accuracy], label="mAP@75")
-
-    plt.scatter([i for i, _ in accuracy], [acc["map_50"] for _, acc in accuracy], color="red")
-    plt.scatter([i for i, _ in accuracy], [acc["map_75"] for _, acc in accuracy], color="red")
-    plt.scatter([i for i, _ in accuracy], [acc["iou"] for _, acc in accuracy], color="red")
-    plt.scatter([i for i, _ in accuracy], [acc["map"] for _, acc in accuracy], color="red")
-    plt.title("Validation Accuracy")
-    plt.xlabel("Epoch")
-    plt.ylabel("mAP")
-    plt.legend()
-
-    plt.show()
+    losses = dict(sorted(trainLosses.items(), key=lambda x: int(x[0])))
+    accuracy = dict(sorted(valAccuracy.items(), key=lambda x: int(x[0])))
+    plotPerf(losses, accuracy)
 
     #* ----------------------------------------------------
+
+
 
 if __name__ == "__main__":
     main()

@@ -61,17 +61,18 @@ def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
 
 
 def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, path = os.getcwd(), device = None):
-    val_accuracy = []
-    train_losses = []
+    val_accuracy = {}
+    train_losses = {}
     best_val_acc = float("-inf")
 
     for epoch in range(n_epoch):
         #* Train the model
         model.train()
         train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, device)
-        train_losses.append((epoch, train_loss))
+        train_losses.update({int(epoch): train_loss})
 
         #* Evaluate the model
+        total_val = []
         model.eval()
         with torch.no_grad():
             for images, targets in valLoader:
@@ -91,9 +92,10 @@ def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, 
                 val_acc.update(iou.compute())
                 val_acc = {k: v.item() for k, v in val_acc.items()}
 
-                val_accuracy.append((epoch, val_acc))
+                total_val.append(val_acc)
 
         accuracy = val_acc["map"]
+        val_accuracy.update({int(epoch): {k: sum(acc[k] for acc in total_val) / len(total_val) for k in total_val[0]}})
         if accuracy > best_val_acc:
             best_val_acc = accuracy
             torch.save(model.state_dict(), os.path.join(path, "model.pth"))
