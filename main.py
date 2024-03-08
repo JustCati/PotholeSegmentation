@@ -18,7 +18,6 @@ from utils.graphs import plotSample, plotDemo, plotPerf
 
 
 
-
 def generateCoco(path, args, split="train"):
     splitPath = os.path.join(path, split)
     if not os.path.exists(splitPath):
@@ -50,6 +49,7 @@ def main():
     parser.add_argument("--plot", action="store_true", default=False, help="Plot a sample image from the dataset with ground truth masks")
     parser.add_argument("--output", type=str, default=os.path.join(os.getcwd(), "OUTPUT"), help="Output directory for model saving")
     parser.add_argument("--demo", action="store_true", default=False, help="Run a demo of inference on a random image from the validation set")
+    parser.add_argument("--perf", action="store_true", default=False, help="Plot the performance of the model")
     args = parser.parse_args()
 
 
@@ -77,7 +77,7 @@ def main():
         T.RandomHorizontalFlip(0.5),
         T.RandomVerticalFlip(0.5),
         T.GaussianBlur((5, 9), (0.1, 5)),
-        # GaussianNoise(p = 0.5, mean = 0, sigma = 50)
+        GaussianNoise(p = 0.5, noise_p = 0.5, mean = 0, sigma = 50),
     ])
     train, val = CocoDataset(trainPath, trainCocoPath, transforms = transform), CocoDataset(valPath, valCocoPath)
 
@@ -153,17 +153,18 @@ def main():
 
     #* --------------- Plot losses -----------------
 
-    if trainLosses is None and valAccuracy is None:
-        if not os.path.exists(os.path.join(modelOutputPath, "losses.json")) or not os.path.exists(os.path.join(modelOutputPath, "valLosses.json")):
-            raise ValueError("Losses file not found")
-        with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
-            trainLosses = json.load(f)
-        with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
-            valAccuracy = json.load(f)
+    if args.perf:
+        if trainLosses is None and valAccuracy is None:
+            if not os.path.exists(os.path.join(modelOutputPath, "losses.json")) or not os.path.exists(os.path.join(modelOutputPath, "valLosses.json")):
+                raise ValueError("Losses file not found")
+            with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
+                trainLosses = json.load(f)
+            with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
+                valAccuracy = json.load(f)
 
-    losses = dict(sorted(trainLosses.items(), key=lambda x: int(x[0])))
-    accuracy = dict(sorted(valAccuracy.items(), key=lambda x: int(x[0])))
-    plotPerf(losses, accuracy)
+        losses = dict(sorted(trainLosses.items(), key=lambda x: int(x[0])))
+        accuracy = dict(sorted(valAccuracy.items(), key=lambda x: int(x[0])))
+        plotPerf(losses, accuracy)
 
     #* ----------------------------------------------------
 
