@@ -27,6 +27,7 @@ class GaussianNoise(object):
             if out.dtype != dtype:
                 out = out.to(dtype)
             return out, target
+        return img, target
 
     def __repr__(self):
         return self.__class__.__name__
