@@ -88,7 +88,7 @@ def main():
     if args.plot:
         plotSample(train)
         choice = input("Continue? [y/N]: ")
-        if choice.lower() == "y" or choice == "":
+        if choice.lower() == "n" or choice == "":
             return
 
     #* ----------------------------------------------------
