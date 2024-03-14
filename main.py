@@ -7,11 +7,11 @@ import torch
 from torch.utils import data
 from torchvision.transforms import v2 as T
 
-from coco.coco import generateJSON
+from utils.coco import generateJSON
 from model.model import getModel, trainModel
 
 from utils.transform import GaussianNoise
-from utils.CocoDataset import CocoDataset
+from utils.coco import CocoDataset
 from utils.graphs import plotSample, plotDemo, plotPerf
 
 
@@ -96,7 +96,7 @@ def main():
 
     #* --------------- Train Model -----------------
 
-    EPOCHS = 10
+    EPOCHS = 20
     device = getDevice()
     trainLosses, valAccuracy = None, None
     model = getModel(pretrained = True, device = device).to(device)
