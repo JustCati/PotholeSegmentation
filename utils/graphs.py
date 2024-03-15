@@ -57,9 +57,9 @@ def plotDemo(img, target, prediction):
             box = prediction['boxes'][i]
             plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='r', facecolor='none'))
 
-    for i in range(len(target["masks"])):
-        alpha = 0.9 * (target["masks"][i] > 0)
-        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
+    for i in range(len(prediction["masks"])):
+        alpha = 0.9 * (prediction["masks"][i] > 0)
+        plt.imshow(prediction["masks"][i], alpha=alpha, interpolation='none')
 
     plt.show()
 
