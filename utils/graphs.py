@@ -61,7 +61,7 @@ def plotDemo(img, target, prediction):
         mask = prediction["masks"][i].cpu().numpy()
         img = np.array(transforms.ToPILImage()(img))
         for c in range(3):
-            img[:, :, c] = np.where(mask == 1, img[:, :, c] * 0.1 + 0.9 * 255 * (c == 0), img[:, :, c])
+            img[:, :, c] = np.where(mask == 1, img[:, :, c] * 0.6 + 0.4 * 255 * (c == 0), img[:, :, c])
         plt.imshow(img, interpolation='none')
 
     plt.show()
