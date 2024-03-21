@@ -63,15 +63,16 @@ def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
 def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, path = os.getcwd(), device = None):
     val_accuracy = {}
     train_losses = {}
-    best_val_acc = float("-inf")
+    best_Acc = float("-inf")
 
     for epoch in range(n_epoch):
-        #* Train the model
+
+        #* --------------- Train the model ----------------
         model.train()
         train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, device)
         train_losses.update({int(epoch): train_loss})
 
-        #* Evaluate the model
+        #* --------------- Evaluate the model -------------
         total_val = []
         model.eval()
         with torch.no_grad():
@@ -80,27 +81,34 @@ def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, 
                 targets = [{k: v.to(device) for k, v in elem.items()} for elem in targets]
 
                 pred = model(images)
+                pred = [{k: (v > 0).reshape(-1 , 640, 640) if k == "masks" else v for k, v in elem.items()} for elem in pred]
+                targets = [{k: (v > 0).reshape(-1 , 640, 640) if k == "masks" else v for k, v in elem.items()} for elem in targets]
 
-                map = MAP(box_format="xyxy", iou_type="bbox")
-                iou = IoU(box_format="xyxy", iou_threshold=0.5)
+                map_segm = MAP(box_format="xyxy", iou_type="segm")
+                map_bbox = MAP(box_format="xyxy", iou_type="bbox")
 
-                map.update(pred, targets)
-                iou.update(pred, targets)
+                map_segm.update(pred, targets)
+                map_bbox.update(pred, targets)
+
+                res_segm = {"segm_" + k: v.item() for k, v in map_segm.compute().items()}
+                res_bbox = {"bbox_" + k: v.item() for k, v in map_bbox.compute().items()}
 
                 val_acc = {}
-                val_acc.update(map.compute())
-                val_acc.update(iou.compute())
-                val_acc = {k: v.item() for k, v in val_acc.items()}
+                val_acc.update(res_segm)
+                val_acc.update(res_bbox)
 
                 total_val.append(val_acc)
+        #* ------------------------------------------------
 
-        accuracy = val_acc["map"]
         val_accuracy.update({int(epoch): {k: sum(acc[k] for acc in total_val) / len(total_val) for k in total_val[0]}})
-        if accuracy > best_val_acc:
-            best_val_acc = accuracy
-            torch.save(model.state_dict(), os.path.join(path, "model.pth"))
 
-        print(f"Epoch {epoch + 1} Training Loss: {train_loss['total_loss']}, Validation Accuracy (mAP): {val_acc['map']}")
+        output = f"Epoch {epoch + 1}: \n"
+        output += f"Training Total Loss: {train_loss['total_loss']},\n"
+        output += f"Training Mask Loss: {train_loss['loss_mask']},\n"
+        output += f"Training Box Loss: {train_loss['loss_box_reg']},\n"
+        output += f"Validation Segmentation Accuracy (mAP): {val_acc['segm_map']},\n"
+        output += f"Validation Box Accuracy (mAP): {val_acc['bbox_map']}\n"
+        print(output)
 
 
     model.load_state_dict(torch.load(os.path.join(path, "model.pth")))
