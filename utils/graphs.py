@@ -8,6 +8,8 @@ from matplotlib.patches import Rectangle
 
 
 
+POTHOLE_CLASS = 1
+
 def plotSample(dataset):
     (img, target) = dataset[random.randint(0, len(dataset))]
 
@@ -51,7 +53,7 @@ def plotDemo(img, target, prediction):
         plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='w', facecolor='none'))
 
     for i in range(len(prediction['boxes'])):
-        if prediction['scores'][i] > 0.7 and prediction['labels'][i] == 1: #? Filter out non-potholes
+        if prediction['scores'][i] == 1 and prediction['labels'][i] == POTHOLE_CLASS:
             box = prediction['boxes'][i]
             plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='r', facecolor='none'))
 
