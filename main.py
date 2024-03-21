@@ -138,6 +138,9 @@ def main():
 
     #* --------------- Plot inferenced example -----------------
 
+    BBOX_THRESHOLD = 0.7
+    MASK_THRESHOLD = 0.7
+
     if args.demo:
         (img, target) = val[random.randint(0, len(val) - 1)]
 
@@ -145,6 +148,12 @@ def main():
         with torch.no_grad():
             prediction = model([img.to(device)])
             prediction = {k: v.to("cpu") for k, v in prediction[0].items()}
+
+        #! Thresholding for visualization (PlotDemo shows only the pixels with 1)
+        for i in range(len(prediction['boxes'])):
+            prediction['scores'][i] = prediction['scores'][i] > BBOX_THRESHOLD
+        for i in range(len(prediction["masks"])):
+            prediction["masks"][i] = prediction["masks"][i] > MASK_THRESHOLD
 
         plotDemo(img, target, prediction)
 
