@@ -163,13 +163,13 @@ def main():
     #* --------------- Plot losses -----------------
 
     if args.perf:
-        if trainLosses is None and valAccuracy is None:
-            if not os.path.exists(os.path.join(modelOutputPath, "losses.json")) or not os.path.exists(os.path.join(modelOutputPath, "valLosses.json")):
-                raise ValueError("Losses file not found")
-            with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
-                trainLosses = json.load(f)
-            with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
-                valAccuracy = json.load(f)
+        trainLosses, valAccuracy = None, None
+        if not os.path.exists(os.path.join(modelOutputPath, "TrainLosses.json")) or not os.path.exists(os.path.join(modelOutputPath, "ValAccuracy.json")):
+            raise ValueError("Performance files not found")
+        with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
+            trainLosses = json.load(f)
+        with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
+            valAccuracy = json.load(f)
 
         losses = dict(sorted(trainLosses.items(), key=lambda x: int(x[0])))
         accuracy = dict(sorted(valAccuracy.items(), key=lambda x: int(x[0])))
