@@ -13,6 +13,7 @@ from model.model import getModel, trainModel
 from utils.transform import GaussianNoise
 from utils.coco import CocoDataset
 from utils.graphs import plotSample, plotDemo, plotPerf
+from utils.transform import GaussianNoise, GaussianBlur
 
 
 
@@ -76,8 +77,8 @@ def main():
     transform = T.Compose([
         T.RandomHorizontalFlip(0.5),
         T.RandomVerticalFlip(0.5),
-        T.GaussianBlur((5, 9), (0.1, 5)),
-        GaussianNoise(p = 0.5, noise_p = 0.5, mean = 0, sigma = 50),
+        GaussianBlur(0.5, (5, 9), (0.1, 5)),
+        # GaussianNoise(p = 0.5, noise_p = 0.07, mean = 0, sigma = 25), #! Uncomment to add noise (Performance will be affected a lot)
     ])
     train, val = CocoDataset(trainPath, trainCocoPath, transforms = transform), CocoDataset(valPath, valCocoPath)
 
