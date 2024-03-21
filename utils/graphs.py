@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 
 
-import torch
 
 def plotSample(dataset):
     (img, target) = dataset[random.randint(0, len(dataset))]
@@ -36,7 +35,6 @@ def plotSample(dataset):
 
 def plotDemo(img, target, prediction):
     plt.axis('off')
-    plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
     plt.imshow(transforms.ToPILImage()(img))
     for i in range(len(target['boxes'])):
@@ -89,10 +87,10 @@ def plotPerf(losses, accuracy):
     plt.legend()
 
     plt.subplot(1, 2, 2)
-    plt.plot([acc["map"] for _, acc in accuracy], label="mAP")
-    plt.plot([acc["iou"] for _, acc in accuracy], label="IoU")
-    plt.scatter([i for i, _ in accuracy], [acc["iou"] for _, acc in accuracy], color="red", marker="s", s=10)
-    plt.scatter([i for i, _ in accuracy], [acc["map"] for _, acc in accuracy], color="red",marker="s", s=10)
+    plt.plot([acc["segm_map"] for _, acc in accuracy], label="Segmentation mAP")
+    plt.plot([acc["bbox_map"] for _, acc in accuracy], label="Box mAP")
+    plt.scatter([i for i, _ in accuracy], [acc["segm_map"] for _, acc in accuracy], color="red", marker="s", s=10)
+    plt.scatter([i for i, _ in accuracy], [acc["bbox_map"] for _, acc in accuracy], color="red",marker="s", s=10)
     plt.title("Validation Accuracy")
     plt.xlabel("Epoch")
     plt.ylabel("mAP")
