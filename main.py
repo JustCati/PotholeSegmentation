@@ -8,9 +8,8 @@ from torch.utils import data
 from torchvision.transforms import v2 as T
 
 from utils.coco import generateJSON
-from model.model import getModel, trainModel
+from model.model import getModel, trainModel, loadCheckpoint
 
-from utils.transform import GaussianNoise
 from utils.coco import CocoDataset
 from utils.graphs import plotSample, plotDemo, plotPerf
 from utils.transform import GaussianNoise, GaussianBlur
@@ -51,6 +50,7 @@ def main():
     parser.add_argument("--output", type=str, default=os.path.join(os.getcwd(), "OUTPUT"), help="Output directory for model saving")
     parser.add_argument("--demo", action="store_true", default=False, help="Run a demo of inference on a random image from the validation set")
     parser.add_argument("--perf", action="store_true", default=False, help="Plot the performance of the model")
+    parser.add_argument("--train", action="store_true", default=False, help="Force Training of the model")
     args = parser.parse_args()
 
 
@@ -112,40 +112,32 @@ def main():
 
     EPOCHS = 20
     device = getDevice()
-    trainLosses, valAccuracy = None, None
-    model = getModel(pretrained = True, device = device).to(device)
+    model = getModel(pretrained = True, device = device)
 
-    if not os.path.exists(os.path.join(modelOutputPath, "model.pth")):
+    if not os.path.exists(os.path.join(modelOutputPath, "model.pth")) or args.train:
         print("\nTraining model")
-
         params = [p for p in model.parameters() if p.requires_grad]
         optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=0.001)
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2)
 
-        model, trainLosses, valAccuracy = trainModel(model,
-                                                   trainDataloader, 
-                                                   valDataloader, 
-                                                   optimizer, 
-                                                   lr_scheduler,
-                                                   EPOCHS,
-                                                   path = modelOutputPath,
-                                                   device = device)
+        if os.path.exists(os.path.join(modelOutputPath, "model.pth")):
+            print("Model found, continuing training...")
+            model, optimizer, lr_scheduler, _ = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device)
 
-        averageLoss = sum([v["total_loss"] for _, v in trainLosses.items()]) / len(trainLosses)
-        averageMap = sum([v["map"] for _, v in valAccuracy.items()]) / len(valAccuracy)
-        print("Average Train Loss: ", averageLoss)
-        print("Average Validation mAP: ", averageMap)
+        model = trainModel(model,
+                           trainDataloader, 
+                           valDataloader, 
+                           optimizer, 
+                           lr_scheduler,
+                           EPOCHS,
+                           path = modelOutputPath,
+                           device = device)
 
-    else:
+    elif os.path.exists(os.path.join(modelOutputPath, "model.pth")):
         print("\nLoading model")
-
-        model.load_state_dict(torch.load(os.path.join(modelOutputPath, "model.pth")))
-        if os.path.exists(os.path.join(modelOutputPath, "TrainLosses.json")):
-            with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
-                trainLosses = json.load(f)
-        if os.path.exists(os.path.join(modelOutputPath, "ValAccuracy.json")):
-            with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
-                valAccuracy = json.load(f)
+        model, *_ = loadCheckpoint(model, path = modelOutputPath, device = device)
+    else:
+        raise ValueError("Model file not found")
 
     #* ----------------------------------------------------
 
