@@ -47,7 +47,7 @@ def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
         loss = sum(loss for loss in loss_dict.values())
 
         losses = {k: v.item() for k, v in loss_dict.items()}
-        losses["total_loss"] = loss.item() / len(loss_dict)
+        losses["total_loss"] = loss.item() / len(images)
 
         optimizer.zero_grad()
         loss.backward()
