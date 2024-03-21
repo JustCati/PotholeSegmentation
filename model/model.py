@@ -24,18 +24,18 @@ def saveCheckpoint(model, optimizer, lr_scheduler, epoch, isBest = False, path =
         shutil.copyfile(os.path.join(path, "checkpoint.pth"), os.path.join(path, "model.pth"))
 
 
-def loadCheckpoint(model, optimizer = None, lr_scheduler = None, path = os.getcwd()):
+def loadCheckpoint(model, optimizer = None, lr_scheduler = None, path = os.getcwd(), device = torch.device("cpu")):
     checkpoint = torch.load(os.path.join(path, "model.pth"))
 
     epoch = checkpoint["epoch"] if "epoch" in checkpoint else 0
     model.load_state_dict(checkpoint["model_state_dict"])
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"]) if optimizer is not None else None
     lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"]) if lr_scheduler is not None else None
-    return model, optimizer, lr_scheduler, epoch
+    return model.to(device), optimizer, lr_scheduler, epoch
 
 
 
-def getModel(pretrained = True, weights = "DEFAULT", backbone_weights = "DEFAULT"):
+def getModel(pretrained = True, weights = "DEFAULT", backbone_weights = "DEFAULT", device = torch.device("cpu")):
     model = None
     if pretrained:
         model = maskrcnn_resnet50_fpn_v2(weights = weights, backbone_weights = backbone_weights)
@@ -50,7 +50,7 @@ def getModel(pretrained = True, weights = "DEFAULT", backbone_weights = "DEFAULT
     model.roi_heads.box_predictor = FastRCNNPredictor(in_channels = in_features_box, num_classes = 2)
     model.roi_heads.mask_predictor = MaskRCNNPredictor(in_channels = in_features_mask, dim_reduced = dim_reduced, num_classes = 2)
 
-    return model
+    return model.to(device)
 
 
 
@@ -79,7 +79,7 @@ def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
 
 
 
-def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, path = os.getcwd(), device = None):
+def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, path = os.getcwd(), device = torch.device("cpu")):
     val_accuracy = {}
     train_losses = {}
     best_Acc = float("-inf")
@@ -133,9 +133,9 @@ def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, 
         if val_accuracy[epoch]["segm_map"] > best_Acc:
             best_Acc = val_accuracy[epoch]["segm_map"]
 
-    model, _, _, _ = loadCheckpoint(model, optimizer, lr_scheduler, path = path)
+    model, *_ = loadCheckpoint(model, optimizer, lr_scheduler, path = path, device = device)
     with open(os.path.join(path, "TrainLosses.json"), "w") as f:
         json.dump(train_losses, f)
     with open(os.path.join(path, "ValAccuracy.json"), "w") as f:
         json.dump(val_accuracy, f)
-    return model
+    return model.to(device)
