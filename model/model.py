@@ -1,22 +1,41 @@
 import os
 import json
 import torch
-
-from torchmetrics.detection.iou import IntersectionOverUnion as IoU
-from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
+import shutil
 
 from torchvision.models.detection import maskrcnn_resnet50_fpn_v2
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
+from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
 
 
 
 
-def getModel(pretrained = True, weights = "DEFAULT", backbone_weights = "DEFAULT", device = None):
-    if device is None:
-        device = torch.device('cpu')
+def saveCheckpoint(model, optimizer, lr_scheduler, epoch, isBest = False, path = os.getcwd()):
+    torch.save({
+        "epoch": epoch,
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "lr_scheduler_state_dict": lr_scheduler.state_dict()
+    }, os.path.join(path, f"checkpoint.pth"))
 
+    if isBest:
+        shutil.copyfile(os.path.join(path, "checkpoint.pth"), os.path.join(path, "model.pth"))
+
+
+def loadCheckpoint(model, optimizer = None, lr_scheduler = None, path = os.getcwd()):
+    checkpoint = torch.load(os.path.join(path, "model.pth"))
+
+    epoch = checkpoint["epoch"] if "epoch" in checkpoint else 0
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"]) if optimizer is not None else None
+    lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"]) if lr_scheduler is not None else None
+    return model, optimizer, lr_scheduler, epoch
+
+
+
+def getModel(pretrained = True, weights = "DEFAULT", backbone_weights = "DEFAULT"):
     model = None
     if pretrained:
         model = maskrcnn_resnet50_fpn_v2(weights = weights, backbone_weights = backbone_weights)
@@ -110,10 +129,13 @@ def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, 
         output += f"Validation Box Accuracy (mAP): {val_acc['bbox_map']}\n"
         print(output)
 
+        saveCheckpoint(model, optimizer, lr_scheduler, epoch, (val_accuracy[epoch]["segm_map"] > best_Acc), path = path)
+        if val_accuracy[epoch]["segm_map"] > best_Acc:
+            best_Acc = val_accuracy[epoch]["segm_map"]
 
-    model.load_state_dict(torch.load(os.path.join(path, "model.pth")))
+    model, _, _, _ = loadCheckpoint(model, optimizer, lr_scheduler, path = path)
     with open(os.path.join(path, "TrainLosses.json"), "w") as f:
         json.dump(train_losses, f)
     with open(os.path.join(path, "ValAccuracy.json"), "w") as f:
         json.dump(val_accuracy, f)
-    return model, train_losses, val_accuracy
+    return model
