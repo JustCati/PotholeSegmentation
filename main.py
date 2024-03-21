@@ -74,17 +74,30 @@ def main():
 
     #* --------------- Create Dataset -----------------
 
+    #! Uncomment Gaussian Noise but performance will suffer a lot
     transform = T.Compose([
         T.RandomHorizontalFlip(0.5),
         T.RandomVerticalFlip(0.5),
         GaussianBlur(0.5, (5, 9), (0.1, 5)),
-        # GaussianNoise(p = 0.5, noise_p = 0.07, mean = 0, sigma = 25), #! Uncomment to add noise (Performance will be affected a lot)
+        # GaussianNoise(p = 0.5, noise_p = 0.07, mean = 0, sigma = 25),
     ])
-    train, val = CocoDataset(trainPath, trainCocoPath, transforms = transform), CocoDataset(valPath, valCocoPath)
+
+    val = CocoDataset(valPath, valCocoPath)
+    train = CocoDataset(trainPath, trainCocoPath, transforms = transform)
 
     BATCH_SIZE = 3
-    trainDataloader = data.DataLoader(train, batch_size = BATCH_SIZE, num_workers = 8, pin_memory = True, shuffle = True, collate_fn = lambda x: tuple(zip(*x)))
-    valDataloader = data.DataLoader(val, batch_size = BATCH_SIZE, num_workers = 8, pin_memory = True, shuffle = True, collate_fn = lambda x: tuple(zip(*x)))
+    trainDataloader = data.DataLoader(train, 
+                                      batch_size = BATCH_SIZE, 
+                                      num_workers = 8, 
+                                      pin_memory = True, 
+                                      shuffle = True, 
+                                      collate_fn = lambda x: tuple(zip(*x)))
+    valDataloader = data.DataLoader(val, 
+                                    batch_size = BATCH_SIZE, 
+                                    num_workers = 8, 
+                                    pin_memory = True, 
+                                    shuffle = True, 
+                                    collate_fn = lambda x: tuple(zip(*x)))
 
     if args.plot:
         plotSample(train)
@@ -165,8 +178,10 @@ def main():
 
     if args.perf:
         trainLosses, valAccuracy = None, None
-        if not os.path.exists(os.path.join(modelOutputPath, "TrainLosses.json")) or not os.path.exists(os.path.join(modelOutputPath, "ValAccuracy.json")):
+        if not os.path.exists(os.path.join(modelOutputPath, "TrainLosses.json")) or \
+            not os.path.exists(os.path.join(modelOutputPath, "ValAccuracy.json")):
             raise ValueError("Performance files not found")
+
         with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
             trainLosses = json.load(f)
         with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
