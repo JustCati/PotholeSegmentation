@@ -106,21 +106,44 @@ def evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, device):
 
             total_val.append(val_acc)
     return {k: sum(acc[k] for acc in total_val) / len(total_val) for k in total_val[0]}
+
+
+
+
+def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, MASK_THRESHOLD, last_epoch = 0, path = os.getcwd(), device = torch.device("cpu")):
+    val_accuracy = {}
+    train_losses = {}
+    best_Acc = float("-inf")
+    last_epoch = last_epoch + 1 if last_epoch != 0 else 0
+
+    for epoch in range(n_epoch):
+
+        #* --------------- Train the model ----------------
+
+        model.train()
+        train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, device)
+        train_losses.update({int(last_epoch + epoch + 1): train_loss})
+
+        #* --------------- Evaluate the model -------------
+
+        model.eval()
+        train_acc = evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, device)
+        val_accuracy.update({int(last_epoch + epoch + 1): train_acc})
+
         #* ------------------------------------------------
 
-        val_accuracy.update({int(epoch): {k: sum(acc[k] for acc in total_val) / len(total_val) for k in total_val[0]}})
 
-        output = f"Epoch {epoch + 1}: \n"
+        output = f"Epoch {last_epoch + epoch + 1}: \n"
         output += f"Training Total Loss: {train_loss['total_loss']},\n"
         output += f"Training Mask Loss: {train_loss['loss_mask']},\n"
         output += f"Training Box Loss: {train_loss['loss_box_reg']},\n"
-        output += f"Validation Segmentation Accuracy (mAP): {val_acc['segm_map']},\n"
-        output += f"Validation Box Accuracy (mAP): {val_acc['bbox_map']}\n"
+        output += f"Validation Segmentation Accuracy (mAP): {train_acc['segm_map']},\n"
+        output += f"Validation Box Accuracy (mAP): {train_acc['bbox_map']}\n"
         print(output)
 
-        saveCheckpoint(model, optimizer, lr_scheduler, epoch, (val_accuracy[epoch]["segm_map"] > best_Acc), path = path)
-        if val_accuracy[epoch]["segm_map"] > best_Acc:
-            best_Acc = val_accuracy[epoch]["segm_map"]
+        saveCheckpoint(model, optimizer, lr_scheduler, last_epoch + epoch, (val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc), path = path)
+        if val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc:
+            best_Acc = val_accuracy[last_epoch + epoch + 1]["segm_map"]
 
     model, *_ = loadCheckpoint(model, path = path, device = device)
     with open(os.path.join(path, "TrainLosses.json"), "a") as f:
