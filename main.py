@@ -110,7 +110,11 @@ def main():
 
     #* --------------- Train Model -----------------
 
-    EPOCHS = 20
+    EPOCHS = 50
+    BBOX_THRESHOLD = 0.7
+    MASK_THRESHOLD = 0.99
+
+    last_epoch = 0
     device = getDevice()
     model = getModel(pretrained = True, device = device)
 
@@ -122,7 +126,7 @@ def main():
 
         if os.path.exists(os.path.join(modelOutputPath, "model.pth")):
             print("Model found, continuing training...")
-            model, optimizer, lr_scheduler, _ = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device)
+            model, optimizer, lr_scheduler, last_epoch = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device)
 
         model = trainModel(model,
                            trainDataloader, 
@@ -130,6 +134,8 @@ def main():
                            optimizer, 
                            lr_scheduler,
                            EPOCHS,
+                           MASK_THRESHOLD,
+                           last_epoch,
                            path = modelOutputPath,
                            device = device)
 
