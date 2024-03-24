@@ -1,11 +1,11 @@
 import os
 import json
-import random
 import argparse
 
 import torch
 from torch.utils import data
 from torchvision.transforms import v2 as T
+from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
 
 from utils.coco import generateJSON
 from model.model import getModel, trainModel, loadCheckpoint
@@ -150,9 +150,6 @@ def main():
 
     #* --------------- Plot inferenced example -----------------
 
-    BBOX_THRESHOLD = 0.7
-    MASK_THRESHOLD = 0.7
-
     if args.demo:
         (img, target) = val[torch.randint(0, len(val), (1,))]
 
@@ -167,6 +164,23 @@ def main():
         for i in range(len(prediction["masks"])):
             prediction["masks"][i] = prediction["masks"][i] > MASK_THRESHOLD
 
+        pred = prediction.copy()
+        pred["masks"] = pred["masks"].type(torch.uint8).reshape(-1, img.shape[-1], img.shape[-1])
+        target["masks"] = target["masks"].type(torch.uint8).reshape(-1, img.shape[-1], img.shape[-1])
+
+        map_segm = MAP(box_format="xyxy", iou_type="segm")
+        map_segm.update([pred], [target])
+        segm_acc = map_segm.compute()
+
+        map_bbox = MAP(box_format="xyxy", iou_type="bbox")
+        map_bbox.update([pred], [target])
+        bbox_acc = map_bbox.compute()
+
+        print()
+        print("Segmentation mAP:")
+        print(f"Mean Average Precision: {segm_acc['map']:.2f}, Mean Average Precision (50): {segm_acc['map_50']:.2f}")
+        print("Bounding Box mAP:")
+        print(f"Mean Average Precision: {bbox_acc['map']:.2f}, Mean Average Precision (50): {bbox_acc['map_50']:.2f}")
         plotDemo(img, target, prediction)
 
     #* ----------------------------------------------------
