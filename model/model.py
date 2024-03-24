@@ -134,11 +134,11 @@ def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, 
 
 
         output = f"Epoch {last_epoch + epoch + 1}: \n"
-        output += f"Training Total Loss: {train_loss['total_loss']},\n"
-        output += f"Training Mask Loss: {train_loss['loss_mask']},\n"
-        output += f"Training Box Loss: {train_loss['loss_box_reg']},\n"
-        output += f"Validation Segmentation Accuracy (mAP): {train_acc['segm_map']},\n"
-        output += f"Validation Box Accuracy (mAP): {train_acc['bbox_map']}\n"
+        output += f"Training Total Loss: {train_loss['total_loss']:.2f},\n"
+        output += f"Training Mask Loss: {train_loss['loss_mask']:.2f},\n"
+        output += f"Training Box Loss: {train_loss['loss_box_reg']:.2f},\n"
+        output += f"Validation Segmentation Accuracy (mAP): {train_acc['segm_map']:.2f},\n"
+        output += f"Validation Box Accuracy (mAP): {train_acc['bbox_map']:.2f}\n"
         print(output)
 
         saveCheckpoint(model, optimizer, lr_scheduler, last_epoch + epoch, (val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc), path = path)
