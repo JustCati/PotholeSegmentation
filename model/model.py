@@ -25,7 +25,7 @@ def saveCheckpoint(model, optimizer, lr_scheduler, epoch, isBest = False, path =
 
 
 def loadCheckpoint(model, optimizer = None, lr_scheduler = None, path = os.getcwd(), device = torch.device("cpu")):
-    checkpoint = torch.load(os.path.join(path, "model.pth"))
+    checkpoint = torch.load(os.path.join(path, "checkpoint.pth"))
 
     epoch = checkpoint["epoch"] if "epoch" in checkpoint else 0
     model.load_state_dict(checkpoint["model_state_dict"])
