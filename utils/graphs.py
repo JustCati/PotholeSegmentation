@@ -39,7 +39,11 @@ def plotSample(dataset):
 
 
 def plotDemo(img, target, prediction):
-    plt.subplot(1, 2, 1)
+    plt.subplot(1, 3, 1)
+    plt.axis('off')
+    plt.imshow(transforms.ToPILImage()(img))
+
+    plt.subplot(1, 3, 2)
     image = (img * 255).type(torch.uint8)
     targetMasks = target["masks"].type(torch.bool).reshape(-1, img.shape[-1], img.shape[-1])
     image = draw_segmentation_masks(image, targetMasks, alpha=0.5, colors="yellow")
@@ -47,7 +51,7 @@ def plotDemo(img, target, prediction):
     plt.imshow(transforms.ToPILImage()(image))
     plt.axis('off')
 
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 3, 3)
     img = (img * 255).type(torch.uint8)
     masks = prediction["masks"].type(torch.bool).reshape(-1, img.shape[-1], img.shape[-1])
     img = draw_bounding_boxes(img, prediction["boxes"], colors="red", width=3)
