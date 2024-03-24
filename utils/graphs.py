@@ -18,10 +18,10 @@ def plotSample(dataset):
 
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
-    plt.imshow(np.zeros((640, 640)), interpolation='none')
+    plt.imshow(np.zeros((640, 640)), interpolation='none', aspect='auto')
     for i in range(len(target["masks"])):
         alpha = 0.5 * (target["masks"][i] > 0)
-        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
+        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none', aspect='auto')
     plt.axis('off')
 
     plt.subplot(1, 2, 2)
@@ -33,7 +33,8 @@ def plotSample(dataset):
 
     for i in range(len(target["masks"])):
         alpha = 0.5 * (target["masks"][i] > 0)
-        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none')
+        plt.imshow(target["masks"][i], alpha=alpha, interpolation='none', aspect='auto')
+    plt.tight_layout()
     plt.show()
 
 
@@ -41,14 +42,14 @@ def plotSample(dataset):
 def plotDemo(img, target, prediction):
     plt.subplot(1, 3, 1)
     plt.axis('off')
-    plt.imshow(transforms.ToPILImage()(img))
+    plt.imshow(transforms.ToPILImage()(img), aspect='auto')
 
     plt.subplot(1, 3, 2)
     image = (img * 255).type(torch.uint8)
     targetMasks = target["masks"].type(torch.bool).reshape(-1, img.shape[-1], img.shape[-1])
     image = draw_segmentation_masks(image, targetMasks, alpha=0.5, colors="yellow")
     image = draw_bounding_boxes(image, target["boxes"], colors="white", width=3)
-    plt.imshow(transforms.ToPILImage()(image))
+    plt.imshow(transforms.ToPILImage()(image), aspect='auto')
     plt.axis('off')
 
     plt.subplot(1, 3, 3)
@@ -57,9 +58,10 @@ def plotDemo(img, target, prediction):
     img = draw_bounding_boxes(img, prediction["boxes"], colors="red", width=3)
     img = draw_bounding_boxes(img, target["boxes"], colors="white", width=3)
     img = draw_segmentation_masks(img.type(torch.uint8), masks, alpha=0.5, colors="red")
-    plt.imshow(transforms.ToPILImage()(img))
+    plt.imshow(transforms.ToPILImage()(img), aspect='auto')
     plt.axis('off')
 
+    plt.tight_layout()
     plt.show()
 
 
