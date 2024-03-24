@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 from torchvision import transforms
 
@@ -14,7 +12,7 @@ from torchvision.utils import draw_segmentation_masks, draw_bounding_boxes
 POTHOLE_CLASS = 1
 
 def plotSample(dataset):
-    (img, target) = dataset[random.randint(0, len(dataset))]
+    (img, target) = dataset[torch.randint(0, len(dataset), (1,))]
 
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)

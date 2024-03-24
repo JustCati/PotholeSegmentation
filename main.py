@@ -154,7 +154,7 @@ def main():
     MASK_THRESHOLD = 0.7
 
     if args.demo:
-        (img, target) = val[random.randint(0, len(val) - 1)]
+        (img, target) = val[torch.randint(0, len(val), (1,))]
 
         model.eval()
         with torch.no_grad():
