@@ -133,9 +133,9 @@ def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, 
         if val_accuracy[epoch]["segm_map"] > best_Acc:
             best_Acc = val_accuracy[epoch]["segm_map"]
 
-    model, *_ = loadCheckpoint(model, optimizer, lr_scheduler, path = path, device = device)
-    with open(os.path.join(path, "TrainLosses.json"), "w") as f:
+    model, *_ = loadCheckpoint(model, path = path, device = device)
+    with open(os.path.join(path, "TrainLosses.json"), "a") as f:
         json.dump(train_losses, f)
-    with open(os.path.join(path, "ValAccuracy.json"), "w") as f:
+    with open(os.path.join(path, "ValAccuracy.json"), "a") as f:
         json.dump(val_accuracy, f)
     return model.to(device)
