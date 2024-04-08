@@ -1,13 +1,10 @@
 import os
-import json
 import torch
 import shutil
 
 from torchvision.models.detection import maskrcnn_resnet50_fpn_v2
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-
-from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
 
 
 
@@ -50,104 +47,4 @@ def getModel(pretrained = True, weights = "DEFAULT", backbone_weights = "DEFAULT
     model.roi_heads.box_predictor = FastRCNNPredictor(in_channels = in_features_box, num_classes = 2)
     model.roi_heads.mask_predictor = MaskRCNNPredictor(in_channels = in_features_mask, dim_reduced = dim_reduced, num_classes = 2)
 
-    return model.to(device)
-
-
-
-
-def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
-    total_losses = []
-
-    for images, targets in loader:
-        images = list([image.to(device) for image in images])
-        targets = [{k: v.to(device) for k, v in elem.items()} for elem in targets]
-
-        loss_dict = model(images, targets)
-        loss = sum(loss for loss in loss_dict.values())
-
-        losses = {k: v.item() for k, v in loss_dict.items()}
-        losses["total_loss"] = loss.item() / len(images)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        lr_scheduler.step()
-
-        total_losses.append(losses)
-    return {k: sum(loss[k] for loss in total_losses) / len(total_losses) for k in total_losses[0]}
-
-
-
-def evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, device):
-    total_val = []
-    with torch.no_grad():
-        for images, targets in valLoader:
-            images = list([image.to(device) for image in images])
-            targets = [{k: v.to(device) for k, v in elem.items()} for elem in targets]
-            imgSize_X = images[0].shape[-1]
-            imgSize_Y = images[0].shape[-2]
-
-            pred = model(images)
-            pred = [{k: (v > MASK_THRESHOLD).reshape(-1 , imgSize_X, imgSize_Y) if k == "masks" else v for k, v in elem.items()} for elem in pred]
-            targets = [{k: (v > MASK_THRESHOLD).reshape(-1 , imgSize_X, imgSize_Y) if k == "masks" else v for k, v in elem.items()} for elem in targets]
-
-            map_segm = MAP(box_format="xyxy", iou_type="segm")
-            map_bbox = MAP(box_format="xyxy", iou_type="bbox")
-
-            map_segm.update(pred, targets)
-            map_bbox.update(pred, targets)
-
-            res_segm = {"segm_" + k: v.item() for k, v in map_segm.compute().items()}
-            res_bbox = {"bbox_" + k: v.item() for k, v in map_bbox.compute().items()}
-
-            val_acc = {}
-            val_acc.update(res_segm)
-            val_acc.update(res_bbox)
-
-            total_val.append(val_acc)
-    return {k: sum(acc[k] for acc in total_val) / len(total_val) for k in total_val[0]}
-
-
-
-
-def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, MASK_THRESHOLD, last_epoch = 0, path = os.getcwd(), device = torch.device("cpu")):
-    val_accuracy = {}
-    train_losses = {}
-    best_Acc = float("-inf")
-    last_epoch = last_epoch + 1 if last_epoch != 0 else 0
-
-    for epoch in range(n_epoch):
-
-        #* --------------- Train the model ----------------
-
-        model.train()
-        train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, device)
-        train_losses.update({int(last_epoch + epoch + 1): train_loss})
-
-        #* --------------- Evaluate the model -------------
-
-        model.eval()
-        train_acc = evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, device)
-        val_accuracy.update({int(last_epoch + epoch + 1): train_acc})
-
-        #* ------------------------------------------------
-
-
-        output = f"Epoch {last_epoch + epoch + 1}: \n"
-        output += f"Training Total Loss: {train_loss['total_loss']:.2f},\n"
-        output += f"Training Mask Loss: {train_loss['loss_mask']:.2f},\n"
-        output += f"Training Box Loss: {train_loss['loss_box_reg']:.2f},\n"
-        output += f"Validation Segmentation Accuracy (mAP): {train_acc['segm_map']:.2f},\n"
-        output += f"Validation Box Accuracy (mAP): {train_acc['bbox_map']:.2f}\n"
-        print(output)
-
-        saveCheckpoint(model, optimizer, lr_scheduler, last_epoch + epoch, (val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc), path = path)
-        if val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc:
-            best_Acc = val_accuracy[last_epoch + epoch + 1]["segm_map"]
-
-    model, *_ = loadCheckpoint(model, path = path, device = device)
-    with open(os.path.join(path, "TrainLosses.json"), "a") as f:
-        json.dump(train_losses, f)
-    with open(os.path.join(path, "ValAccuracy.json"), "a") as f:
-        json.dump(val_accuracy, f)
     return model.to(device)
