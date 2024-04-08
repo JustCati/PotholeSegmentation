@@ -176,8 +176,8 @@ def main():
         map_bbox.update([pred], [target])
         bbox_acc = map_bbox.compute()
 
-        print()
-        print("Segmentation mAP:")
+        print("----------------------------------------------")
+        print("DEMO Segmentation mAP:")
         print(f"Mean Average Precision: {segm_acc['map']:.2f}, Mean Average Precision (50): {segm_acc['map_50']:.2f}")
         print("Bounding Box mAP:")
         print(f"Mean Average Precision: {bbox_acc['map']:.2f}, Mean Average Precision (50): {bbox_acc['map_50']:.2f}")
