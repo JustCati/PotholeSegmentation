@@ -10,6 +10,7 @@ from model import saveCheckpoint, loadCheckpoint
 def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
     total_losses = []
 
+    model.train()
     for images, targets in loader:
         images = list([image.to(device) for image in images])
         targets = [{k: v.to(device) for k, v in elem.items()} for elem in targets]

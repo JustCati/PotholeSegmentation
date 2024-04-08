@@ -6,6 +6,7 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
 def evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, device):
     total_val = []
     with torch.no_grad():
+        model.eval()
         for images, targets in valLoader:
             images = list([image.to(device) for image in images])
             targets = [{k: v.to(device) for k, v in elem.items()} for elem in targets]
