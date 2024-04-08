@@ -8,7 +8,9 @@ from torchvision.transforms import v2 as T
 from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
 
 from utils.coco import generateJSON
-from model.model import getModel, trainModel, loadCheckpoint
+from model.train import trainModel
+from model.evaluate import evaluate_one_epoch
+from model.model import getModel, loadCheckpoint
 
 from utils.coco import CocoDataset
 from utils.graphs import plotSample, plotDemo, plotPerf
@@ -51,6 +53,7 @@ def main():
     parser.add_argument("--demo", action="store_true", default=False, help="Run a demo of inference on a random image from the validation set")
     parser.add_argument("--perf", action="store_true", default=False, help="Plot the performance of the model")
     parser.add_argument("--train", action="store_true", default=False, help="Force Training of the model")
+    parser.add_argument("--eval", action="store_true", default=False, help="Evaluate the model")
     args = parser.parse_args()
 
 
@@ -144,6 +147,18 @@ def main():
         model, *_ = loadCheckpoint(model, path = modelOutputPath, device = device)
     else:
         raise ValueError("Model file not found")
+
+    #* ----------------------------------------------------
+
+    #* --------------- Evaluate Model -----------------
+    
+    if args.eval:
+        print("\nEvaluating model")
+        model.eval()
+        with torch.no_grad():
+            valAccuracy = evaluate_one_epoch(model, valDataloader, MASK_THRESHOLD, device)
+            print("Validation Accuracy:")
+            print(f"Segmentation mAP: {valAccuracy['segm_map']:.2f}, Bounding Box mAP: {valAccuracy['bbox_map']:.2f}")
 
     #* ----------------------------------------------------
 
