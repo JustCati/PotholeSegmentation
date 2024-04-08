@@ -2,8 +2,8 @@ import os
 import json
 import torch
 
-from evaluate import evaluate_one_epoch
-from model import saveCheckpoint, loadCheckpoint
+from .evaluate import evaluate_one_epoch
+from .model import saveCheckpoint, loadCheckpoint
 
 
 
