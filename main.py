@@ -115,7 +115,7 @@ def main():
 
     EPOCHS = 50
     BBOX_THRESHOLD = 0.7
-    MASK_THRESHOLD = 0.99
+    MASK_THRESHOLD = 0.7
 
     last_epoch = 0
     device = getDevice()
