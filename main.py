@@ -48,7 +48,7 @@ def main():
     parser = argparse.ArgumentParser(description="Pothole Segmentation")
     parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
     parser.add_argument("--target", type=str, default="images", help="Target directory (images, videos)", choices=["images", "videos"])
-    parser.add_argument("--plot", action="store_true", default=False, help="Plot a sample image from the dataset with ground truth masks")
+    parser.add_argument("--sample", action="store_true", default=False, help="Plot a sample image from the dataset with ground truth masks")
     parser.add_argument("--output", type=str, default=os.path.join(os.getcwd(), "OUTPUT"), help="Output directory for model saving")
     parser.add_argument("--demo", action="store_true", default=False, help="Run a demo of inference on a random image from the validation set")
     parser.add_argument("--perf", action="store_true", default=False, help="Plot the performance of the model")
@@ -82,7 +82,7 @@ def main():
         T.RandomHorizontalFlip(0.5),
         T.RandomVerticalFlip(0.5),
         GaussianBlur(0.5, (5, 9), (0.1, 5)),
-        # GaussianNoise(p = 0.5, noise_p = 0.07, mean = 0, sigma = 25),
+        # GaussianNoise(p = 0.5, noise_p = 0.07, mean = 0, sigma = 5),
     ])
 
     val = CocoDataset(valPath, valCocoPath)
@@ -102,7 +102,7 @@ def main():
                                     shuffle = True, 
                                     collate_fn = lambda x: tuple(zip(*x)))
 
-    if args.plot:
+    if args.sample:
         plotSample(train)
         choice = input("Continue? [y/N]: ")
         if choice.lower() == "n" or choice == "":
@@ -166,37 +166,38 @@ def main():
     #* --------------- Plot inferenced example -----------------
 
     if args.demo:
-        (img, target) = val[torch.randint(0, len(val), (1,))]
+        for _ in range(3):
+            (img, target) = val[torch.randint(0, len(val), (1,))]
 
-        model.eval()
-        with torch.no_grad():
-            prediction = model([img.to(device)])
-            prediction = {k: v.to("cpu") for k, v in prediction[0].items()}
+            model.eval()
+            with torch.no_grad():
+                prediction = model([img.to(device)])
+                prediction = {k: v.to("cpu") for k, v in prediction[0].items()}
 
-        #! Thresholding for visualization (PlotDemo shows only the pixels with 1)
-        for i in range(len(prediction['boxes'])):
-            prediction['scores'][i] = prediction['scores'][i] > BBOX_THRESHOLD
-        for i in range(len(prediction["masks"])):
-            prediction["masks"][i] = prediction["masks"][i] > MASK_THRESHOLD
+            #! Thresholding for visualization (PlotDemo shows only the pixels with 1)
+            for i in range(len(prediction['boxes'])):
+                prediction['scores'][i] = prediction['scores'][i] > BBOX_THRESHOLD
+            for i in range(len(prediction["masks"])):
+                prediction["masks"][i] = prediction["masks"][i] > MASK_THRESHOLD
 
-        pred = prediction.copy()
-        pred["masks"] = pred["masks"].type(torch.uint8).reshape(-1, img.shape[-1], img.shape[-1])
-        target["masks"] = target["masks"].type(torch.uint8).reshape(-1, img.shape[-1], img.shape[-1])
+            pred = prediction.copy()
+            pred["masks"] = pred["masks"].type(torch.uint8).reshape(-1, img.shape[-1], img.shape[-1])
+            target["masks"] = target["masks"].type(torch.uint8).reshape(-1, img.shape[-1], img.shape[-1])
 
-        map_segm = MAP(box_format="xyxy", iou_type="segm")
-        map_segm.update([pred], [target])
-        segm_acc = map_segm.compute()
+            map_segm = MAP(box_format="xyxy", iou_type="segm")
+            map_segm.update([pred], [target])
+            segm_acc = map_segm.compute()
 
-        map_bbox = MAP(box_format="xyxy", iou_type="bbox")
-        map_bbox.update([pred], [target])
-        bbox_acc = map_bbox.compute()
+            map_bbox = MAP(box_format="xyxy", iou_type="bbox")
+            map_bbox.update([pred], [target])
+            bbox_acc = map_bbox.compute()
 
-        print("----------------------------------------------")
-        print("DEMO Segmentation mAP:")
-        print(f"Mean Average Precision: {segm_acc['map']:.2f}, Mean Average Precision (50): {segm_acc['map_50']:.2f}")
-        print("Bounding Box mAP:")
-        print(f"Mean Average Precision: {bbox_acc['map']:.2f}, Mean Average Precision (50): {bbox_acc['map_50']:.2f}")
-        plotDemo(img, target, prediction)
+            print("----------------------------------------------")
+            print("DEMO Segmentation mAP:")
+            print(f"Mean Average Precision: {segm_acc['map']:.2f}, Mean Average Precision (50): {segm_acc['map_50']:.2f}")
+            print("Bounding Box mAP:")
+            print(f"Mean Average Precision: {bbox_acc['map']:.2f}, Mean Average Precision (50): {bbox_acc['map_50']:.2f}")
+            plotDemo(img, target, prediction)
 
     #* ----------------------------------------------------
 
