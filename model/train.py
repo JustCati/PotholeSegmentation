@@ -64,6 +64,7 @@ def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, 
 
         saveCheckpoint(model, optimizer, lr_scheduler, last_epoch + epoch, (val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc), path = path)
         if val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc:
+            print(f"Best model found at epoch {last_epoch + epoch + 1} with mAP: {val_accuracy[last_epoch + epoch + 1]['segm_map']:.2f}, saving....")
             best_Acc = val_accuracy[last_epoch + epoch + 1]["segm_map"]
 
     model, *_ = loadCheckpoint(model, path = path, device = device)
