@@ -101,6 +101,7 @@ werkzeug = "==3.0.1"
 yacs = "==0.1.8"
 pyqt6 = "*"
 torchmetrics = "*"
+scipy = "*"
 
 [dev-packages]
 torch-tb-profiler = "*"
