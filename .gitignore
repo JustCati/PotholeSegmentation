@@ -2,6 +2,7 @@
 data/*
 output/*
 OUTPUT/*
+riepilogo.*
 
 # General
 .DS_Store
