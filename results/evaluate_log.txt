@@ -1,0 +1,14 @@
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+loading annotations into memory...
+Done (t=0.02s)
+creating index...
+index created!
+
+Loading model
+
+Evaluating model
+Validation Accuracy:
+Segmentation mAP: 0.40, Bounding Box mAP: 0.44
