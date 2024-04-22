@@ -99,7 +99,7 @@ def main():
                                     batch_size = BATCH_SIZE, 
                                     num_workers = 8, 
                                     pin_memory = True, 
-                                    shuffle = True, 
+                                    shuffle = False, 
                                     collate_fn = lambda x: tuple(zip(*x)))
 
     if args.sample:
