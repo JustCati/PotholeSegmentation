@@ -96,7 +96,7 @@ def main():
                                       shuffle = True, 
                                       collate_fn = lambda x: tuple(zip(*x)))
     valDataloader = data.DataLoader(val, 
-                                    batch_size = BATCH_SIZE, 
+                                    batch_size = 1, 
                                     num_workers = 8, 
                                     pin_memory = True, 
                                     shuffle = False, 
