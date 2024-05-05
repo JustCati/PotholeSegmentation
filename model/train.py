@@ -42,7 +42,7 @@ def train_one_epoch(model, loader, optimizer, lr_scheduler, tb_writer: SummaryWr
 
         #* --------------- Log Progress ----------------
 
-        block1 = 'Epoch: [{:03d}][{:05d}/{:05d}]  Loss: {:.4f} \n'.format(epoch, iter, num_iters, loss.item() / len(images))
+        block1 = 'Epoch: [{:03d}][{:05d}/{:05d}]  Loss: {:.4f} \n'.format(epoch + 1, iter, num_iters, loss.item() / len(images))
         block2 = 'Box Loss: {:.4f}'.format(loss_dict['loss_box_reg'].item())
         block3 = "Mask Loss: {:.4f}".format(loss_dict['loss_mask'].item())
 
