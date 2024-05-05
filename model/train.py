@@ -24,9 +24,12 @@ def train_one_epoch(model, loader, optimizer, lr_scheduler, tb_writer: SummaryWr
         #* --------------- Log Losses ----------------
         global_step = epoch * num_iters + iter
 
-        for k, v in loss_dict.items():
-            tb_writer.add_scalar(f"train/{k}", v, global_step)
-        tb_writer.add_scalar("train/total_loss", loss.item() / len(images), global_step)
+        losses = {
+            "loss_box_reg": loss_dict["loss_box_reg"].item(), 
+            "loss_mask": loss_dict["loss_mask"].item()
+        }
+        tb_writer.add_scalars("train/all_losses", losses, global_step)
+        tb_writer.add_scalar("train/final_loss", loss.item() / len(images), global_step)
 
         #* --------------- Backward and Optimize ----------------
         optimizer.zero_grad()
