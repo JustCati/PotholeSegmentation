@@ -57,7 +57,7 @@ def trainModel(cfg):
     model = cfg["model"]
     optimizer = cfg["optimizer"]
     lr_scheduler = cfg["lr_scheduler"]
-    last_epoch = cfg["last_epoch"]
+    curr_epoch = cfg["curr_epoch"]
     n_epoch = cfg["epoch"]
     MASK_THRESHOLD = cfg["mask_threshold"]
     device = cfg["device"]
@@ -71,17 +71,11 @@ def trainModel(cfg):
     val_accuracy = {}
     train_losses = {}
     best_Acc = float("-inf")
-    last_epoch = last_epoch + 1 if last_epoch != 0 else 0
 
-    for epoch in range(n_epoch):
-
-        #* --------------- Train the model ----------------
-
+    for epoch in range(curr_epoch, n_epoch):
+        #* --------------- Train ----------------
         model.train()
-        train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, device)
-        train_losses.update({int(last_epoch + epoch + 1): train_loss})
-
-        #* --------------- Evaluate the model -------------
+        train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, tb_writer, epoch, device)
 
         model.eval()
         train_acc = evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, device)

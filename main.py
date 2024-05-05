@@ -129,14 +129,14 @@ def main():
 
         if os.path.exists(os.path.join(modelOutputPath, "model.pth")):
             print("Model found, continuing training...")
-            model, optimizer, lr_scheduler, last_epoch = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device)
+            model, optimizer, lr_scheduler, curr_epoch = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device)
 
         cfg = {
             "model" : model,
             "optimizer" : optimizer,
             "lr_scheduler" : lr_scheduler,
-            "last_epoch" : last_epoch,
-            "epoch" : EPOCHS,
+            "curr_epoch" : curr_epoch,
+            "epoch" : EPOCHS - curr_epoch,
             "mask_threshold" : MASK_THRESHOLD,
             "device" : device,
             "trainDataloader" : trainDataloader,
