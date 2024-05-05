@@ -4,7 +4,7 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
 
 
 
-def evaluate_one_epoch(model, loader, MASK_THRESHOLD, tb_writer: SummaryWriter, epoch, device):
+def evaluate_one_epoch(model, loader, MASK_THRESHOLD, device, tb_writer: SummaryWriter = None, epoch = 1):
     total_val = []
     num_iters = len(loader)
 
@@ -41,7 +41,10 @@ def evaluate_one_epoch(model, loader, MASK_THRESHOLD, tb_writer: SummaryWriter, 
 
         #* --------------- Log mAP ----------------
         final_acc = {k: sum(acc[k] for acc in total_val) / len(total_val) for k in total_val[0]}
-        tb_writer.add_scalars("val/map", final_acc, epoch)
+
+        if tb_writer is not None:
+            tb_writer.add_scalars("val/map", final_acc, epoch)
+
         print("[Validation] Epoch: {:03d} Segmentation mAP: {:.2f}, Bounding Box mAP: {:.2f}".format(epoch, final_acc["segm_map"], final_acc["bbox_map"]))
         print()
     return final_acc

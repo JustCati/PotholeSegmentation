@@ -81,9 +81,9 @@ def trainModel(cfg):
         train_acc = evaluate_one_epoch(model,
                                        valLoader,
                                        MASK_THRESHOLD,
+                                       device,
                                        tb_writer,
-                                       epoch,
-                                       device)
+                                       epoch)
         train_acc = train_acc["segm_map"]
 
         saveCheckpoint(model, optimizer, lr_scheduler, epoch, (train_acc > best_Acc), path = path)
