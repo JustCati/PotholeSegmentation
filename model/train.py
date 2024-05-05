@@ -31,7 +31,23 @@ def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
 
 
 
-def trainModel(model, trainLoader, valLoader, optimizer, lr_scheduler, n_epoch, MASK_THRESHOLD, last_epoch = 0, path = os.getcwd(), device = torch.device("cpu")):
+def trainModel(cfg):
+
+    #* --------------- Load Config ----------------
+    model = cfg["model"]
+    optimizer = cfg["optimizer"]
+    lr_scheduler = cfg["lr_scheduler"]
+    last_epoch = cfg["last_epoch"]
+    n_epoch = cfg["epoch"]
+    MASK_THRESHOLD = cfg["mask_threshold"]
+    device = cfg["device"]
+    trainLoader = cfg["trainDataloader"]
+    valLoader = cfg["valDataloader"]
+    path = cfg["path"]
+    tb_writer = cfg["tb_writer"]
+    #* --------------------------------------------
+
+
     val_accuracy = {}
     train_losses = {}
     best_Acc = float("-inf")

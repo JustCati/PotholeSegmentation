@@ -131,16 +131,20 @@ def main():
             print("Model found, continuing training...")
             model, optimizer, lr_scheduler, last_epoch = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device)
 
-        model = trainModel(model,
-                           trainDataloader, 
-                           valDataloader, 
-                           optimizer, 
-                           lr_scheduler,
-                           EPOCHS,
-                           MASK_THRESHOLD,
-                           last_epoch,
-                           path = modelOutputPath,
-                           device = device)
+        cfg = {
+            "model" : model,
+            "optimizer" : optimizer,
+            "lr_scheduler" : lr_scheduler,
+            "last_epoch" : last_epoch,
+            "epoch" : EPOCHS,
+            "mask_threshold" : MASK_THRESHOLD,
+            "device" : device,
+            "trainDataloader" : trainDataloader,
+            "valDataloader" : valDataloader,
+            "tb_writer" : tb_writer,
+            "path" : modelOutputPath,
+        }
+        model = trainModel(cfg)
 
     elif os.path.exists(os.path.join(modelOutputPath, "model.pth")):
         print("\nLoading model")
