@@ -55,7 +55,7 @@ def main(args):
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
 
-    path = os.path.join(path, args.target)
+    path = os.path.join(path, "images")
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
 
