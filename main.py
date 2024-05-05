@@ -65,7 +65,7 @@ def main():
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
 
-    modelOutputPath = os.path.join(args.output, "mask_rcnn_" + datetime.datetime.fromtimestamp(int(time.time())))
+    modelOutputPath = os.path.join(args.output, "mask_rcnn_" + str(datetime.datetime.fromtimestamp(int(time.time()))))
     if not os.path.exists(modelOutputPath):
         os.makedirs(modelOutputPath)
 
