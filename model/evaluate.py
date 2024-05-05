@@ -49,10 +49,3 @@ def evaluate_one_epoch(model, loader, MASK_THRESHOLD, device, tb_writer: Summary
         print()
     return final_acc
 
-
-            val_acc = {}
-            val_acc.update(res_segm)
-            val_acc.update(res_bbox)
-
-            total_val.append(val_acc)
-    return {k: sum(acc[k] for acc in total_val) / len(total_val) for k in total_val[0]}
