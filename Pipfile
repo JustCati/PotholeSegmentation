@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pandas = "==2.2.0"
+pandas = "*"
 numpy = "==1.26.4"
 pyarrow = "==15.0.0"
 matplotlib = "==3.8.3"
@@ -12,7 +12,7 @@ ipykernel = "==6.29.2"
 opencv-python = "*"
 appnope = "==0.1.4"
 torch = "*"
-torchvision = "==0.17.0"
+torchvision = "*"
 torchaudio = "==2.2.0"
 absl-py = "==2.1.0"
 antlr4-python3-runtime = "==4.9.3"
