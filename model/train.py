@@ -80,20 +80,10 @@ def trainModel(cfg):
         model.train()
         train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, tb_writer, epoch, device)
 
+        #* --------------- Evaluate -------------
         model.eval()
-        train_acc = evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, device)
-        val_accuracy.update({int(last_epoch + epoch + 1): train_acc})
+        train_acc = evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, tb_writer, epoch, device)
 
-        #* ------------------------------------------------
-
-
-        output = f"Epoch {last_epoch + epoch + 1}: \n"
-        output += f"Training Total Loss: {train_loss['total_loss']:.2f},\n"
-        output += f"Training Mask Loss: {train_loss['loss_mask']:.2f},\n"
-        output += f"Training Box Loss: {train_loss['loss_box_reg']:.2f},\n"
-        output += f"Validation Segmentation Accuracy (mAP): {train_acc['segm_map']:.2f},\n"
-        output += f"Validation Box Accuracy (mAP): {train_acc['bbox_map']:.2f}\n"
-        print(output)
 
         saveCheckpoint(model, optimizer, lr_scheduler, last_epoch + epoch, (val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc), path = path)
         if val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc:
