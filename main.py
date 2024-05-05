@@ -48,19 +48,7 @@ def getDevice():
 
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Pothole Segmentation")
-    parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
-    parser.add_argument("--target", type=str, default="images", help="Target directory (images, videos)", choices=["images", "videos"])
-    parser.add_argument("--sample", action="store_true", default=False, help="Plot a sample image from the dataset with ground truth masks")
-    parser.add_argument("--output", type=str, default=os.path.join(os.getcwd(), "OUTPUT"), help="Output directory for model saving")
-    parser.add_argument("--demo", action="store_true", default=False, help="Run a demo of inference on a random image from the validation set")
-    parser.add_argument("--perf", action="store_true", default=False, help="Plot the performance of the model")
-    parser.add_argument("--train", action="store_true", default=False, help="Force Training of the model")
-    parser.add_argument("--eval", action="store_true", default=False, help="Evaluate the model")
-    args = parser.parse_args()
-
-
+def main(args):
     path = args.path
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
@@ -233,4 +221,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Pothole Segmentation")
+    parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
+    parser.add_argument("--target", type=str, default="images", help="Target directory (images, videos)", choices=["images", "videos"])
+    parser.add_argument("--sample", action="store_true", default=False, help="Plot a sample image from the dataset with ground truth masks")
+    parser.add_argument("--train", action="store_true", default=False, help="Force Training of the model")
+    parser.add_argument("--demo", type=str, default="", help="Run a demo of inference on 3 random image from the validation set with the model at the specified path")
+    parser.add_argument("--perf", type=str, default="", help="Plot the performance of the model at the specified path")
+    parser.add_argument("--eval", type=str, default="", help="Evaluate the model at the specified path")
+    args = parser.parse_args()
+
+    main(args)
