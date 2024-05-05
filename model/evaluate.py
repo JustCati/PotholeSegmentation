@@ -8,8 +8,8 @@ def evaluate_one_epoch(model, loader, MASK_THRESHOLD, tb_writer: SummaryWriter, 
     total_val = []
     num_iters = len(loader)
 
+    model.eval()
     with torch.no_grad():
-        model.eval()
         for iter, target in enumerate(loader):
             images, targets = target
 
