@@ -4,6 +4,8 @@ import time
 import datetime
 import argparse
 
+import pandas as pd
+
 import torch
 from torch.utils import data
 from torchvision.transforms import v2 as T
@@ -57,9 +59,20 @@ def main(args):
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
 
-    modelOutputPath = os.path.join(args.output, "mask_rcnn_" + str(datetime.datetime.fromtimestamp(int(time.time()))))
+    if args.train:
+        modelOutputPath = os.path.join(os.getcwd(), "OUTPUT", "mask_rcnn_" + str(datetime.datetime.fromtimestamp(int(time.time()))))
+        if not os.path.exists(modelOutputPath):
+            os.makedirs(modelOutputPath)
+    elif args.perf or args.eval or args.demo:
+        if args.perf:
+            modelOutputPath = args.perf
+        elif args.eval:
+            modelOutputPath = args.eval
+        elif args.demo:
+            modelOutputPath = args.demo
+
     if not os.path.exists(modelOutputPath):
-        os.makedirs(modelOutputPath)
+        raise ValueError(f"Path {modelOutputPath} does not exist")
 
     trainPath, trainCocoPath = generateCoco(path, args, "train")
     valPath, valCocoPath = generateCoco(path, args, "val")
@@ -103,8 +116,7 @@ def main(args):
     #* ----------------------------------------------------
 
 
-    #* --------------- Train Model -----------------
-
+    #* --------------- Train or Load Model -----------------
     EPOCHS = 50
     BBOX_THRESHOLD = 0.7
     MASK_THRESHOLD = 0.7
@@ -114,15 +126,16 @@ def main(args):
     model = getModel(pretrained = True, device = device)
     tb_writer = SummaryWriter(os.path.join(modelOutputPath, "logs"))
 
-    if not os.path.exists(os.path.join(modelOutputPath, "model.pth")) or args.train:
+    if args.train:
         print("\nTraining model")
+
         params = [p for p in model.parameters() if p.requires_grad]
         optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=0.001)
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2)
 
-        if os.path.exists(os.path.join(modelOutputPath, "model.pth")):
-            print("Model found, continuing training...")
-            model, optimizer, lr_scheduler, curr_epoch = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device)
+        if os.path.exists(os.path.join(modelOutputPath, "checkpoint.pth")):
+            print("Most recent trained model found, continuing training...")
+            model, optimizer, lr_scheduler, curr_epoch = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device, best = False)
 
         cfg = {
             "model" : model,
@@ -140,28 +153,20 @@ def main(args):
         trainModel(cfg)
 
     elif os.path.exists(os.path.join(modelOutputPath, "model.pth")):
-        print("\nLoading model")
-        model, *_ = loadCheckpoint(model, path = modelOutputPath, device = device)
+        print("\nLoading best model")
+        model, *_ = loadCheckpoint(model, path = modelOutputPath, device = device, best = True)
     else:
         raise ValueError("Model file not found")
-
     #* ----------------------------------------------------
 
     #* --------------- Evaluate Model -----------------
-    
     if args.eval:
         print("\nEvaluating model")
-        model.eval()
-        with torch.no_grad():
-            valAccuracy = evaluate_one_epoch(model, valDataloader, MASK_THRESHOLD, device)
-            print("Validation Accuracy:")
-            print(f"Segmentation mAP: {valAccuracy['segm_map']:.2f}, Bounding Box mAP: {valAccuracy['bbox_map']:.2f}")
-
+        evaluate_one_epoch(model, valDataloader, MASK_THRESHOLD, device, None)
     #* ----------------------------------------------------
 
 
     #* --------------- Plot inferenced example -----------------
-
     if args.demo:
         for _ in range(3):
             (img, target) = val[torch.randint(0, len(val), (1,))]
@@ -195,7 +200,6 @@ def main(args):
             print("Bounding Box mAP:")
             print(f"Mean Average Precision: {bbox_acc['map']:.2f}, Mean Average Precision (50): {bbox_acc['map_50']:.2f}")
             plotDemo(img, target, prediction)
-
     #* ----------------------------------------------------
 
 
