@@ -1,11 +1,7 @@
-import os
-import json
-import torch
-from torch.utils.tensorboard import SummaryWriter
-
+from .model import saveCheckpoint
 from .evaluate import evaluate_one_epoch
-from .model import saveCheckpoint, loadCheckpoint
 
+from torch.utils.tensorboard import SummaryWriter
 
 
 def train_one_epoch(model, loader, optimizer, lr_scheduler, tb_writer: SummaryWriter, epoch, device):
@@ -70,29 +66,32 @@ def trainModel(cfg):
     tb_writer = cfg["tb_writer"]
     #* --------------------------------------------
 
-
-    val_accuracy = {}
-    train_losses = {}
+    #* --------------- Train and Evaluate ----------------
     best_Acc = float("-inf")
+    print("\nStart training model...")
 
     for epoch in range(curr_epoch, n_epoch):
-        #* --------------- Train ----------------
-        model.train()
-        train_loss = train_one_epoch(model, trainLoader, optimizer, lr_scheduler, tb_writer, epoch, device)
+        train_one_epoch(model, 
+                        trainLoader,
+                        optimizer,
+                        lr_scheduler,
+                        tb_writer,
+                        epoch,
+                        device)
+        train_acc = evaluate_one_epoch(model,
+                                       valLoader,
+                                       MASK_THRESHOLD,
+                                       tb_writer,
+                                       epoch,
+                                       device)
+        train_acc = train_acc["segm_map"]
 
-        #* --------------- Evaluate -------------
-        model.eval()
-        train_acc = evaluate_one_epoch(model, valLoader, MASK_THRESHOLD, tb_writer, epoch, device)
+        saveCheckpoint(model, optimizer, lr_scheduler, epoch, (train_acc > best_Acc), path = path)
+        if train_acc > best_Acc:
+            print(f"Best model found at epoch {epoch + 1} with mAP: {train_acc:.2f}, saving....")
+            print()
+            best_Acc = train_acc
+    #* ----------------------------------------------
 
-
-        saveCheckpoint(model, optimizer, lr_scheduler, last_epoch + epoch, (val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc), path = path)
-        if val_accuracy[last_epoch + epoch + 1]["segm_map"] > best_Acc:
-            print(f"Best model found at epoch {last_epoch + epoch + 1} with mAP: {val_accuracy[last_epoch + epoch + 1]['segm_map']:.2f}, saving....")
-            best_Acc = val_accuracy[last_epoch + epoch + 1]["segm_map"]
-
-    model, *_ = loadCheckpoint(model, path = path, device = device)
-    with open(os.path.join(path, "TrainLosses.json"), "a") as f:
-        json.dump(train_losses, f)
-    with open(os.path.join(path, "ValAccuracy.json"), "a") as f:
-        json.dump(val_accuracy, f)
-    return model.to(device)
+    print("Training completed")
+    return

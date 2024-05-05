@@ -1,11 +1,15 @@
 import os
 import json
+import time
+import datetime
 import argparse
 
 import torch
 from torch.utils import data
 from torchvision.transforms import v2 as T
 from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
+
+from torch.utils.tensorboard import SummaryWriter
 
 from utils.coco import generateJSON
 from model.train import trainModel
@@ -117,9 +121,10 @@ def main():
     BBOX_THRESHOLD = 0.7
     MASK_THRESHOLD = 0.7
 
-    last_epoch = 0
+    curr_epoch = 0
     device = getDevice()
     model = getModel(pretrained = True, device = device)
+    tb_writer = SummaryWriter(os.path.join(modelOutputPath, "logs"))
 
     if not os.path.exists(os.path.join(modelOutputPath, "model.pth")) or args.train:
         print("\nTraining model")
@@ -144,7 +149,7 @@ def main():
             "tb_writer" : tb_writer,
             "path" : modelOutputPath,
         }
-        model = trainModel(cfg)
+        trainModel(cfg)
 
     elif os.path.exists(os.path.join(modelOutputPath, "model.pth")):
         print("\nLoading model")
