@@ -1,33 +1,53 @@
 import os
 import json
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
 from .evaluate import evaluate_one_epoch
 from .model import saveCheckpoint, loadCheckpoint
 
 
 
-def train_one_epoch(model, loader, optimizer, lr_scheduler, device):
-    total_losses = []
+def train_one_epoch(model, loader, optimizer, lr_scheduler, tb_writer: SummaryWriter, epoch, device):
+    num_iters = len(loader)
 
     model.train()
-    for images, targets in loader:
+    for iter, target in enumerate(loader):
+        #* --------------- Forward Pass ----------------
+        images, targets = target
         images = list([image.to(device) for image in images])
         targets = [{k: v.to(device) for k, v in elem.items()} for elem in targets]
 
         loss_dict = model(images, targets)
         loss = sum(loss for loss in loss_dict.values())
 
-        losses = {k: v.item() for k, v in loss_dict.items()}
-        losses["total_loss"] = loss.item() / len(images)
+        #* --------------- Log Losses ----------------
+        global_step = epoch * num_iters + iter
 
+        for k, v in loss_dict.items():
+            tb_writer.add_scalar(f"train/{k}", v, global_step)
+        tb_writer.add_scalar("train/total_loss", loss.item() / len(images), global_step)
+
+        #* --------------- Backward and Optimize ----------------
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         lr_scheduler.step()
 
-        total_losses.append(losses)
-    return {k: sum(loss[k] for loss in total_losses) / len(total_losses) for k in total_losses[0]}
+        #* --------------- Log Learning Rate ----------------
+        tb_writer.add_scalar("train/lr", optimizer.param_groups[0]["lr"], global_step)
+
+        #* --------------- Log Progress ----------------
+
+        block1 = 'Epoch: [{:03d}][{:05d}/{:05d}]  Loss: {:.4f} \n'.format(epoch, iter, num_iters, loss.item() / len(images))
+        block2 = 'Box Loss: {:.4f}'.format(loss_dict['loss_box_reg'].item())
+        block3 = "Mask Loss: {:.4f}".format(loss_dict['loss_mask'].item())
+
+        if iter % 10 == 0 or iter == num_iters - 1:
+            output = "\t".join([block1, block2, block3])
+            print(output)
+    print("[Train] Epoch: [{:03d}] Loss: {:.4f} Lr: {:.8f}".format(epoch, loss.item() / len(images), optimizer.param_groups[0]["lr"]))
+    return
 
 
 
