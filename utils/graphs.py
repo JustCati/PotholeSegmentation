@@ -64,41 +64,33 @@ def plotDemo(img, target, prediction):
 
 
 
-def plotPerf(losses, accuracy):
-    losses = losses.items()
-    accuracy = accuracy.items()
+def plotPerf(args):
+    lossess = {k: v for k, v in {k: v if "loss" in k else None for k, v in args.items()}.items() if v is not None}
+    maps = {k: v for k, v in {k: v if "map" in k else None for k, v in args.items()}.items() if v is not None}
 
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(10, 8))
+    for idx, (key, value) in enumerate(lossess.items()):
+        newvalue = value.ewm(alpha=1 - 0.99).mean()
+        
+        plt.subplot(len(lossess), 1, idx + 1)
+        plt.plot(value, c="gray", alpha=0.5)
+        plt.plot(newvalue, c="red")
+        plt.title(key)
+        plt.xlabel("Epoch")
+        plt.ylabel("Value")
+        plt.grid(True)
+        plt.tight_layout()
+    plt.show()
 
-    ax = plt.subplot(1, 2, 1)
-    plt.plot([loss["total_loss"] for _, loss in losses], label="Total Loss")
-    plt.plot([loss["loss_mask"] for _, loss in losses], label="Mask Loss")
-    plt.plot([loss["loss_box_reg"] for _, loss in losses], label="Box Loss")
-    plt.scatter([i for i, _ in losses], [loss["total_loss"] for _, loss in losses], color="red", marker="s", s=10)
-    plt.scatter([i for i, _ in losses], [loss["loss_mask"] for _, loss in losses], color="red", marker="s", s=10)
-    plt.scatter([i for i, _ in losses], [loss["loss_box_reg"] for _, loss in losses], color="red", marker="s", s=10)
-    plt.title("Train Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.grid(True)
-    plt.xticks(range(0, len(losses), 1))
-    plt.setp(ax.get_xticklabels(), rotation=90, horizontalalignment='right')
-    plt.legend()
-    plt.tight_layout()
+    plt.figure(figsize=(10, 8))
+    for idx, (key, value) in enumerate(maps.items()):
+        newvalue = value.ewm(alpha=1 - 0.99).mean()
 
-    ax = plt.subplot(1, 2, 2)
-    plt.plot([acc["segm_map"] for _, acc in accuracy], label="Segmentation mAP")
-    plt.plot([acc["bbox_map"] for _, acc in accuracy], label="Box mAP")
-    plt.scatter([i for i, _ in accuracy], [acc["segm_map"] for _, acc in accuracy], color="red", marker="s", s=10)
-    plt.scatter([i for i, _ in accuracy], [acc["bbox_map"] for _, acc in accuracy], color="red",marker="s", s=10)
-    plt.title("Validation Accuracy")
-    plt.xlabel("Epoch")
-    plt.ylabel("mAP")
-    plt.grid(True)
-    plt.xticks(range(0, len(accuracy), 1))
-    plt.setp(ax.get_xticklabels(), rotation=90, horizontalalignment='right')
-    plt.legend()
-    plt.tight_layout()
-
-    plt.tight_layout()
+        plt.plot(value, alpha=0.5)
+        plt.plot(newvalue)
+        plt.title(key)
+        plt.xlabel("Epoch")
+        plt.ylabel("Value")
+        plt.grid(True)
+        plt.tight_layout()
     plt.show()

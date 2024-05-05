@@ -82,30 +82,31 @@ def main(args):
 
     #* --------------- Create Dataset -----------------
 
-    #! Uncomment Gaussian Noise but performance will suffer a lot
-    transform = T.Compose([
-        T.RandomHorizontalFlip(0.5),
-        T.RandomVerticalFlip(0.5),
-        GaussianBlur(0.5, (5, 9), (0.1, 5)),
-        # GaussianNoise(p = 0.5, noise_p = 0.07, mean = 0, sigma = 5),
-    ])
+    if args.train or args.sample or args.demo or args.eval:
+        #! Uncomment Gaussian Noise but performance will suffer a lot
+        transform = T.Compose([
+            T.RandomHorizontalFlip(0.5),
+            T.RandomVerticalFlip(0.5),
+            GaussianBlur(0.5, (5, 9), (0.1, 5)),
+            # GaussianNoise(p = 0.5, noise_p = 0.07, mean = 0, sigma = 5),
+        ])
 
-    val = CocoDataset(valPath, valCocoPath)
-    train = CocoDataset(trainPath, trainCocoPath, transforms = transform)
+        val = CocoDataset(valPath, valCocoPath)
+        train = CocoDataset(trainPath, trainCocoPath, transforms = transform)
 
-    BATCH_SIZE = 3
-    trainDataloader = data.DataLoader(train, 
-                                      batch_size = BATCH_SIZE, 
-                                      num_workers = 8, 
-                                      pin_memory = True, 
-                                      shuffle = True, 
-                                      collate_fn = lambda x: tuple(zip(*x)))
-    valDataloader = data.DataLoader(val, 
-                                    batch_size = 1, 
-                                    num_workers = 8, 
-                                    pin_memory = True, 
-                                    shuffle = False, 
-                                    collate_fn = lambda x: tuple(zip(*x)))
+        BATCH_SIZE = 3
+        trainDataloader = data.DataLoader(train, 
+                                        batch_size = BATCH_SIZE, 
+                                        num_workers = 8, 
+                                        pin_memory = True, 
+                                        shuffle = True, 
+                                        collate_fn = lambda x: tuple(zip(*x)))
+        valDataloader = data.DataLoader(val, 
+                                        batch_size = 1, 
+                                        num_workers = 8, 
+                                        pin_memory = True, 
+                                        shuffle = False, 
+                                        collate_fn = lambda x: tuple(zip(*x)))
 
     if args.sample:
         plotSample(train)
@@ -152,11 +153,11 @@ def main(args):
         }
         trainModel(cfg)
 
-    elif os.path.exists(os.path.join(modelOutputPath, "model.pth")):
+    elif os.path.exists(os.path.join(modelOutputPath, "model.pth")) and args.perf == "":
         print("\nLoading best model")
         model, *_ = loadCheckpoint(model, path = modelOutputPath, device = device, best = True)
-    else:
-        raise ValueError("Model file not found")
+    elif args.perf == "":
+            raise ValueError("Model file not found")
     #* ----------------------------------------------------
 
     #* --------------- Evaluate Model -----------------
@@ -204,22 +205,26 @@ def main(args):
 
 
     #* --------------- Plot losses -----------------
-
     if args.perf:
         trainLosses, valAccuracy = None, None
-        if not os.path.exists(os.path.join(modelOutputPath, "TrainLosses.json")) or \
-            not os.path.exists(os.path.join(modelOutputPath, "ValAccuracy.json")):
+        if not os.path.exists(os.path.join(modelOutputPath, "csv")):
             raise ValueError("Performance files not found")
 
-        with open(os.path.join(modelOutputPath, "TrainLosses.json"), "r") as f:
-            trainLosses = json.load(f)
-        with open(os.path.join(modelOutputPath, "ValAccuracy.json"), "r") as f:
-            valAccuracy = json.load(f)
+        bbox_loss = pd.read_csv(os.path.join(modelOutputPath, "csv", "logs_train_all_losses_loss_box_reg.csv")).drop(columns = ["Wall time", "Step"])
+        segm_loss = pd.read_csv(os.path.join(modelOutputPath, "csv", "logs_train_all_losses_loss_mask.csv")).drop(columns = ["Wall time", "Step"])
+        final_loss = pd.read_csv(os.path.join(modelOutputPath, "csv", "logs.csv")).drop(columns = ["Wall time", "Step"])
 
-        losses = dict(sorted(trainLosses.items(), key=lambda x: int(x[0])))
-        accuracy = dict(sorted(valAccuracy.items(), key=lambda x: int(x[0])))
-        plotPerf(losses, accuracy)
+        bbox_map = pd.read_csv(os.path.join(modelOutputPath, "csv", "logs_val_map_bbox_map.csv")).drop(columns = ["Wall time", "Step"])
+        segm_map = pd.read_csv(os.path.join(modelOutputPath, "csv", "logs_val_map_segm_map.csv")).drop(columns = ["Wall time", "Step"])
 
+        args = {
+            "bbox_loss" : bbox_loss,
+            "segm_loss" : segm_loss,
+            "final_loss" : final_loss,
+            "bbox_map" : bbox_map,
+            "segm_map" : segm_map
+        }
+        plotPerf(args)
     #* ----------------------------------------------------
 
 
@@ -227,7 +232,6 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pothole Segmentation")
     parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
-    parser.add_argument("--target", type=str, default="images", help="Target directory (images, videos)", choices=["images", "videos"])
     parser.add_argument("--sample", action="store_true", default=False, help="Plot a sample image from the dataset with ground truth masks")
     parser.add_argument("--train", action="store_true", default=False, help="Force Training of the model")
     parser.add_argument("--demo", type=str, default="", help="Run a demo of inference on 3 random image from the validation set with the model at the specified path")
