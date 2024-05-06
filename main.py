@@ -155,7 +155,8 @@ def main(args):
 
     elif os.path.exists(os.path.join(modelOutputPath, "model.pth")) and args.perf == "":
         print("\nLoading best model")
-        model, *_ = loadCheckpoint(model, path = modelOutputPath, device = device, best = True)
+        model, _, _, epoch = loadCheckpoint(model, path = modelOutputPath, device = device, best = True)
+        print(f"Loaded best model at epoch {epoch + 1}")
     elif args.perf == "":
             raise ValueError("Model file not found")
     #* ----------------------------------------------------
