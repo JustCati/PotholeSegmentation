@@ -37,7 +37,8 @@ def plotSample(dataset):
 
 
 
-def plotDemo(img, target, prediction):
+def plotDemo(img, target, prediction, segm_map, bbox_map):
+    plt.title("mAP: {:.2f} (segm) {:.2f} (bbox)".format(segm_map, bbox_map))
     plt.subplot(1, 3, 1)
     plt.axis('off')
     plt.imshow(transforms.ToPILImage()(img), aspect='auto')

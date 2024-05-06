@@ -172,36 +172,17 @@ def main(args):
     if args.demo:
         for _ in range(3):
             (img, target) = val[torch.randint(0, len(val), (1,))]
-
-            model.eval()
-            with torch.no_grad():
-                prediction = model([img.to(device)])
-                prediction = {k: v.to("cpu") for k, v in prediction[0].items()}
-
-            #! Thresholding for visualization (PlotDemo shows only the pixels with 1)
-            for i in range(len(prediction['boxes'])):
-                prediction['scores'][i] = prediction['scores'][i] > BBOX_THRESHOLD
-            for i in range(len(prediction["masks"])):
-                prediction["masks"][i] = prediction["masks"][i] > MASK_THRESHOLD
-
-            pred = prediction.copy()
-            pred["masks"] = pred["masks"].type(torch.uint8).reshape(-1, img.shape[-1], img.shape[-1])
-            target["masks"] = target["masks"].type(torch.uint8).reshape(-1, img.shape[-1], img.shape[-1])
-
-            map_segm = MAP(box_format="xyxy", iou_type="segm")
-            map_segm.update([pred], [target])
-            segm_acc = map_segm.compute()
-
-            map_bbox = MAP(box_format="xyxy", iou_type="bbox")
-            map_bbox.update([pred], [target])
-            bbox_acc = map_bbox.compute()
-
-            print("----------------------------------------------")
-            print("DEMO Segmentation mAP:")
-            print(f"Mean Average Precision: {segm_acc['map']:.2f}, Mean Average Precision (50): {segm_acc['map_50']:.2f}")
-            print("Bounding Box mAP:")
-            print(f"Mean Average Precision: {bbox_acc['map']:.2f}, Mean Average Precision (50): {bbox_acc['map_50']:.2f}")
-            plotDemo(img, target, prediction)
+            
+            cfg = {
+                "model" : model,
+                "img" : img,
+                "target" : target,
+                "MASK_THRESHOLD" : MASK_THRESHOLD,
+                "BBOX_THRESHOLD" : BBOX_THRESHOLD,
+                "device" : device
+            }
+            pred = demo(**cfg)
+            plotDemo(**pred)
     #* ----------------------------------------------------
 
 
