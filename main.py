@@ -108,11 +108,11 @@ def main(args):
                                         shuffle = False, 
                                         collate_fn = lambda x: tuple(zip(*x)))
 
-    if args.sample:
-        plotSample(train)
-        choice = input("Continue? [y/N]: ")
-        if choice.lower() == "n" or choice == "":
-            return
+        if args.sample:
+            plotSample(train)
+            choice = input("Continue? [y/N]: ")
+            if choice.lower() == "n" or choice == "":
+                return
 
     #* ----------------------------------------------------
 
