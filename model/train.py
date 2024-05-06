@@ -64,13 +64,13 @@ def trainModel(cfg):
     valLoader = cfg["valDataloader"]
     path = cfg["path"]
     tb_writer = cfg["tb_writer"]
+    best_Acc = cfg["best_Acc"]
     #* --------------------------------------------
 
     #* --------------- Train and Evaluate ----------------
-    best_Acc = float("-inf")
     print("\nStart training model...")
 
-    for epoch in range(curr_epoch, n_epoch):
+    for epoch in range(curr_epoch, n_epoch + 1):
         train_one_epoch(model, 
                         trainLoader,
                         optimizer,

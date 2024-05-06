@@ -63,6 +63,8 @@ def main(args):
         modelOutputPath = os.path.join(os.getcwd(), "OUTPUT", "mask_rcnn_" + str(datetime.datetime.fromtimestamp(int(time.time()))))
         if not os.path.exists(modelOutputPath):
             os.makedirs(modelOutputPath)
+    elif args.resume:
+        modelOutputPath = args.resume
     elif args.perf or args.eval or args.demo:
         if args.perf:
             modelOutputPath = args.perf
@@ -82,7 +84,7 @@ def main(args):
 
     #* --------------- Create Dataset -----------------
 
-    if args.train or args.sample or args.demo or args.eval:
+    if args.train or args.sample or args.demo or args.eval or args.resume != "":
         #! Uncomment Gaussian Noise but performance will suffer a lot
         transform = T.Compose([
             T.RandomHorizontalFlip(0.5),
@@ -118,7 +120,7 @@ def main(args):
 
 
     #* --------------- Train or Load Model -----------------
-    EPOCHS = 50
+    EPOCHS = args.epochs if args.epochs else 10
     BBOX_THRESHOLD = 0.7
     MASK_THRESHOLD = 0.7
 
@@ -127,15 +129,22 @@ def main(args):
     model = getModel(pretrained = True, device = device)
     tb_writer = SummaryWriter(os.path.join(modelOutputPath, "logs"))
 
-    if args.train:
+    if args.train or args.resume != "":
         print("\nTraining model")
 
         params = [p for p in model.parameters() if p.requires_grad]
         optimizer = torch.optim.AdamW(params, lr=1e-4, weight_decay=0.001)
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2)
 
-        if os.path.exists(os.path.join(modelOutputPath, "checkpoint.pth")):
+        if args.resume != "" and os.path.exists(os.path.join(modelOutputPath, "checkpoint.pth")):
             print("Most recent trained model found, continuing training...")
+
+            model, *_ = loadCheckpoint(model, path = modelOutputPath, device = device, best = True)
+            print("Evaluating best model to get mAP...")
+            best_Acc = evaluate_one_epoch(model, valDataloader, MASK_THRESHOLD, device, None)["segm_map"]
+
+            #* Load last checkpoint
+            print("Loading last checkpoint...")
             model, optimizer, lr_scheduler, curr_epoch = loadCheckpoint(model, optimizer, lr_scheduler, path = modelOutputPath, device = device, best = False)
 
         cfg = {
@@ -143,13 +152,14 @@ def main(args):
             "optimizer" : optimizer,
             "lr_scheduler" : lr_scheduler,
             "curr_epoch" : curr_epoch,
-            "epoch" : EPOCHS - curr_epoch,
+            "epoch" : curr_epoch + (EPOCHS - curr_epoch),
             "mask_threshold" : MASK_THRESHOLD,
             "device" : device,
             "trainDataloader" : trainDataloader,
             "valDataloader" : valDataloader,
             "tb_writer" : tb_writer,
             "path" : modelOutputPath,
+            "best_Acc" : best_Acc if args.resume != "" else float("-inf")
         }
         trainModel(cfg)
 
@@ -238,6 +248,8 @@ if __name__ == "__main__":
     parser.add_argument("--perf", type=str, default="", help="Plot the performance of the model at the specified path")
     parser.add_argument("--eval", type=str, default="", help="Evaluate the model at the specified path")
     parser.add_argument("--save", action="store_true", default=False, help="Save the demo images to the model directory")
+    parser.add_argument("--resume", type=str, default="", help="Resume training from the specified model path")
+    parser.add_argument("--epochs", type=int, default=10, help="Number of epochs to train the model")
     args = parser.parse_args()
 
     main(args)
