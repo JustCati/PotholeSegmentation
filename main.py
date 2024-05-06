@@ -15,8 +15,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from utils.coco import generateJSON
 from model.train import trainModel
-from model.evaluate import evaluate_one_epoch
 from model.model import getModel, loadCheckpoint
+from model.evaluate import evaluate_one_epoch, demo
 
 from utils.coco import CocoDataset
 from utils.graphs import plotSample, plotDemo, plotPerf
@@ -170,19 +170,38 @@ def main(args):
 
     #* --------------- Plot inferenced example -----------------
     if args.demo:
-        for _ in range(3):
-            (img, target) = val[torch.randint(0, len(val), (1,))]
-            
-            cfg = {
-                "model" : model,
-                "img" : img,
-                "target" : target,
-                "MASK_THRESHOLD" : MASK_THRESHOLD,
-                "BBOX_THRESHOLD" : BBOX_THRESHOLD,
-                "device" : device
-            }
-            pred = demo(**cfg)
-            plotDemo(**pred)
+        if not args.save:
+            for _ in range(3):
+                (img, target) = val[torch.randint(0, len(val), (1,))]
+
+                cfg = {
+                    "model" : model,
+                    "img" : img,
+                    "target" : target,
+                    "MASK_THRESHOLD" : MASK_THRESHOLD,
+                    "BBOX_THRESHOLD" : BBOX_THRESHOLD,
+                    "device" : device
+                }
+                pred = demo(**cfg)
+                plotDemo(**pred)
+        else:
+            demoPath = os.path.join(modelOutputPath, "demo")
+            if not os.path.exists(demoPath):
+                os.makedirs(demoPath)
+            for idx, (img, target) in enumerate(val):
+                cfg = {
+                    "model" : model,
+                    "img" : img,
+                    "target" : target,
+                    "MASK_THRESHOLD" : MASK_THRESHOLD,
+                    "BBOX_THRESHOLD" : BBOX_THRESHOLD,
+                    "device" : device
+                }
+                pred = demo(**cfg)
+                outPath = os.path.join(demoPath, f"demo_{idx}.png")
+                plotDemo(**pred, save=True, path=outPath)
+                del pred
+                del cfg
     #* ----------------------------------------------------
 
 
@@ -218,6 +237,7 @@ if __name__ == "__main__":
     parser.add_argument("--demo", type=str, default="", help="Run a demo of inference on 3 random image from the validation set with the model at the specified path")
     parser.add_argument("--perf", type=str, default="", help="Plot the performance of the model at the specified path")
     parser.add_argument("--eval", type=str, default="", help="Evaluate the model at the specified path")
+    parser.add_argument("--save", action="store_true", default=False, help="Save the demo images to the model directory")
     args = parser.parse_args()
 
     main(args)

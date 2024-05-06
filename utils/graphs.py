@@ -37,7 +37,7 @@ def plotSample(dataset):
 
 
 
-def plotDemo(img, target, prediction, segm_map, bbox_map):
+def plotDemo(img, target, prediction, segm_map, bbox_map, save = False, path = None):
     plt.title("mAP: {:.2f} (segm) {:.2f} (bbox)".format(segm_map, bbox_map))
     plt.subplot(1, 3, 1)
     plt.axis('off')
@@ -61,7 +61,11 @@ def plotDemo(img, target, prediction, segm_map, bbox_map):
     plt.axis('off')
 
     plt.tight_layout()
-    plt.show()
+    if save:
+        plt.savefig(path)
+        plt.close()
+    else:
+        plt.show()
 
 
 
