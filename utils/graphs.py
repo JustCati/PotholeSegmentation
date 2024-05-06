@@ -82,15 +82,15 @@ def plotPerf(args):
         plt.tight_layout()
     plt.show()
 
+    lines = []
     plt.figure(figsize=(10, 8))
-    for idx, (key, value) in enumerate(maps.items()):
-        newvalue = value.ewm(alpha=1 - 0.99).mean()
-
-        plt.plot(value, alpha=0.5)
-        plt.plot(newvalue)
-        plt.title(key)
+    plt.title("mAP")
+    for key, value in maps.items():
+        lines.extend(plt.plot(value, label="Segmentation" if key == "segm_map" else "Bounding Box"),)
+        plt.plot(value.idxmax(), value.max(), "ro")
         plt.xlabel("Epoch")
         plt.ylabel("Value")
         plt.grid(True)
         plt.tight_layout()
+    plt.legend(handles=lines)
     plt.show()
