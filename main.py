@@ -188,7 +188,6 @@ def main(args):
 
     #* --------------- Plot losses -----------------
     if args.perf:
-        trainLosses, valAccuracy = None, None
         if not os.path.exists(os.path.join(modelOutputPath, "csv")):
             raise ValueError("Performance files not found")
 
