@@ -70,7 +70,7 @@ def trainModel(cfg):
     #* --------------- Train and Evaluate ----------------
     print("\nStart training model...")
 
-    for epoch in range(curr_epoch, n_epoch + 1):
+    for epoch in range(curr_epoch, n_epoch):
         train_one_epoch(model, 
                         trainLoader,
                         optimizer,

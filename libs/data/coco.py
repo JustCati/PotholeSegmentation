@@ -1,6 +1,7 @@
 import os
 import json
 import math
+import random
 import cv2 as cv
 import pandas as pd
 
@@ -78,6 +79,12 @@ class CocoDataset(VisionDataset):
         return len(self.ids)
 
 
+
+def worker_reset_seed(worker_id):
+    seed = torch.initial_seed() % 2 ** 31
+    np.random.seed(seed)
+    random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
 
 
 

@@ -1,21 +1,24 @@
 import os
-import json
 import time
+import random
 import datetime
 import argparse
 
+import numpy as np
 import pandas as pd
 
 import torch
 from torch.utils import data
+import torch.backends.cudnn as cudnn
 from torchvision.transforms import v2 as T
 
 from torch.utils.tensorboard import SummaryWriter
 
-from libs.data.coco import generateJSON
 from libs.model.train import trainModel
 from libs.model.model import getModel, loadCheckpoint
 from libs.model.evaluate import evaluate_one_epoch, demo
+from libs.data.coco import generateJSON, worker_reset_seed
+
 
 from libs.data.coco import CocoDataset
 from libs.graphs import plotSample, plotDemo, plotPerf
@@ -46,6 +49,22 @@ def getDevice():
     else:
         device = torch.device('cpu')
     return device
+
+
+def fix_random_seed(seed):
+    rng_generator = torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    cudnn.enabled = True
+    cudnn.benchmark = False
+    cudnn.deterministic = True
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    
+    #! Commented because roi__align has a deterministic versione very memory hungry 
+    # torch.use_deterministic_algorithms(True) #! https://github.com/pytorch/vision/issues/8168#issuecomment-1890599205
+    return rng_generator
 
 
 
@@ -84,6 +103,9 @@ def main(args):
     #* --------------- Create Dataset -----------------
 
     if args.train or args.sample or args.demo or args.eval or args.resume != "":
+        SEED = 1234567891
+        rng_generator = fix_random_seed(SEED)
+
         #! Uncomment Gaussian Noise but performance will suffer a lot
         transform = T.Compose([
             T.RandomHorizontalFlip(0.5),
@@ -100,7 +122,9 @@ def main(args):
                                         batch_size = BATCH_SIZE, 
                                         num_workers = 8, 
                                         pin_memory = True, 
-                                        shuffle = True, 
+                                        shuffle = True,
+                                        generator=rng_generator,
+                                        worker_init_fn=worker_reset_seed,
                                         collate_fn = lambda x: tuple(zip(*x)))
         valDataloader = data.DataLoader(val, 
                                         batch_size = 1, 
