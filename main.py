@@ -9,18 +9,17 @@ import pandas as pd
 import torch
 from torch.utils import data
 from torchvision.transforms import v2 as T
-from torchmetrics.detection.mean_ap import MeanAveragePrecision as MAP
 
 from torch.utils.tensorboard import SummaryWriter
 
-from utils.coco import generateJSON
-from model.train import trainModel
-from model.model import getModel, loadCheckpoint
-from model.evaluate import evaluate_one_epoch, demo
+from libs.data.coco import generateJSON
+from libs.model.train import trainModel
+from libs.model.model import getModel, loadCheckpoint
+from libs.model.evaluate import evaluate_one_epoch, demo
 
-from utils.coco import CocoDataset
-from utils.graphs import plotSample, plotDemo, plotPerf
-from utils.transform import GaussianNoise, GaussianBlur
+from libs.data.coco import CocoDataset
+from libs.graphs import plotSample, plotDemo, plotPerf
+from libs.data.transform import GaussianNoise, GaussianBlur
 
 
 
