@@ -77,6 +77,7 @@ def main(args):
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
 
+    modelOutputPath = ""
     if args.train:
         modelOutputPath = os.path.join(os.getcwd(), "OUTPUT", "mask_rcnn_" + str(datetime.datetime.fromtimestamp(int(time.time()))))
         if not os.path.exists(modelOutputPath):
@@ -91,7 +92,7 @@ def main(args):
         elif args.demo:
             modelOutputPath = args.demo
 
-    if not os.path.exists(modelOutputPath):
+    if not os.path.exists(modelOutputPath) and not args.sample:
         raise ValueError(f"Path {modelOutputPath} does not exist")
 
     trainPath, trainCocoPath = generateCoco(path, args, "train")
