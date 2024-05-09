@@ -4,6 +4,9 @@ output/*
 OUTPUT/*
 riepilogo.*
 mask_*
+document.*
+!document.pdf
+!document.tex
 
 # General
 .DS_Store
