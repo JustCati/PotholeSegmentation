@@ -3,7 +3,7 @@
 In this chapter, we will discuss the dataset used for the project, the data augmentation techniques used to increase the size of the dataset and the data preprocessing techniques used to prepare the dataset for the model.
 
 
-\subsection*{Dataset}
+\section*{Dataset}
 The dataset used for this project comes from Kaggle: \textit{Pothole Segmentation YOLOv8}. 
 
 It is a dataset of 780 images of potholes, 720 of which are used for training and 60 for testing. 
@@ -44,7 +44,7 @@ An example of the content of a text file with the corresponding points projectio
     \label{fig:annotation_example}
  \end{figure}
 
-\subsection*{Data Conversion}
+\section{Data Conversion}
 Since the model used in this project is Mask R-CNN, the dataset needs to be converted to the COCO format. \\
 
 The COCO format is a JSON file that contains all the information about the dataset, including the images, the annotations, the categories, and the information about the licenses.
@@ -60,7 +60,7 @@ The json file is structured as follows:
         \end{itemize}
 \end{itemize}
 
-\subsection*{Data Augmentation}
+\section{Data Augmentation}
 The dataset used for this project is quite small, even after the augmentation done by the authors. To tackle this problem, we used data augmentation techniques to increase the size of the dataset.
 In particular, we just used the following techniques:
 \begin{itemize}
