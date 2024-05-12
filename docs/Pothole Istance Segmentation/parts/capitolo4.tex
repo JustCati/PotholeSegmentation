@@ -1,0 +1,52 @@
+\chapter{Model}
+
+In this chapter we will describe the model used for the whole project. We will also explain the architecture of the model and the reason behind the choice of the model it self. 
+We will also describe the modification made to the model in order to make it work with the dataset we have and all the training choice made.
+
+\section{Mask R-CNN}
+Mask R-CNN is a model that extends Faster R-CNN by adding a branch for predicting segmentation masks on each Region of Interest (RoI), in parallel with the existing branch for classification and bounding box regression. Moreover, Mask R-CNN is easy to generalize to other tasks, e.g., allowing us to estimate human poses in the same framework. Because of that, for the specific task of this project, we choose to use Mask R-CNN instead of other models like U-Net, which is more focused on panoptic segmentation and in general medical imaging tasks.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/mask-rcnn architecture.png}
+    \caption{Mask R-CNN architecture. A zoomed-in view of the RoIAlign layer and the mask head is shown.}
+    \label{fig:maskrcnn}
+\end{figure}
+
+\subsection{Architecture}
+The architecture of Mask R-CNN is composed of two main parts: the backbone and the head. 
+
+The backbone is a feature extractor that takes an image as input and outputs a feature map made of different RoI(s) (Region of Interest): we used ResNet-50-FPN. Future improvements could be made by using a more complex backbone like ResNet-101 or ResNeXt-101. 
+
+The feature map is then passed to the head, which are responsible for making predictions on the image. The head is composed of three branches: one for classification, one for bounding box regression, and one for mask prediction. 
+\begin{itemize}
+    \item The classification branch is a Fully Connected Network (FCN) that takes the feature map as input and outputs a probability distribution over the classes for each RoI.
+    \item The bounding box regression branch is a FCN that takes the feature map as input and outputs the coordinates of the bounding box for each RoI.
+    \item The mask branch is made of two convolutional layers that takes the feature map as input and outputs a binary mask for each RoI. 
+\end{itemize}
+
+The main feature of the Mask-RCNN model is the implementation of the RoIAlign layer. The RoIAlign layer is used to extract the feature map of each RoI in a way that is independent of the size of the RoI itself. This is done by dividing the RoI into a grid of cells and then using bilinear interpolation to sample the feature map at each cell. This allows the model to learn to make predictions on the RoI without being affected by the size of the RoI.
+In this way the model removes the quantization of the coordinates of the original RoI and computes the exact values of the locations.
+
+
+\subsection{Architectural modifications}
+The Mask R-CNN model was originally designed for the COCO dataset, which is a dataset of images containing multiple objects of different classes. In our case, we are dealing with a dataset of images containing only potholes. Because of that, we made some modifications to the model in order to make it work with our dataset.
+
+The first modification we made was to change the number of classes in the classification branch from 81 to 2. In order to do so we changed the size of the output layers of both the Faster R-CNN and the mask branch as shown in the following code snippet \ref{cod:code1}.
+
+\label{cod:code1}
+\begin{lstlisting}
+    def getModel(model):
+        in_features_box = model.roi_heads.box_predictor.cls_score.in_features
+        in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
+        dim_reduced = model.roi_heads.mask_predictor.conv5_mask.out_channels
+
+        model.roi_heads.box_predictor = FastRCNNPredictor(in_channels = in_features_box, num_classes = 2)
+        model.roi_heads.mask_predictor = MaskRCNNPredictor(in_channels = in_features_mask, dim_reduced = dim_reduced, num_classes = 2)
+        return model
+\end{lstlisting}
+
+
+\subsection{Training details}
+We trained the model using the AdamW optimizer with a learning rate of 1e-4 and a weight decay of 1e-3. We trained for 50 epochs on a single 3070 GPU with 8GB of RAM and a batch size of 3 (due to the limited amount of memory available).
+
