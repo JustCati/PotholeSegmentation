@@ -46,6 +46,8 @@ The first modification we made was to change the number of classes in the classi
         return model
 \end{lstlisting}
 
+It's important to note that the reinstantiation of the FastRCCNPredictor and the MaskRCNNPredictor, necessary in order to change the number of classes, makes the model to lose the weights loaded before. This means that only the Backbone (ResNet-50-FPN) is pre-trained.
+
 
 \subsection{Training details}
 We trained the model using the AdamW optimizer with a learning rate of 1e-4 and a weight decay of 1e-3. We trained for 50 epochs on a single 3070 GPU with 8GB of RAM and a batch size of 3 (due to the limited amount of memory available).
