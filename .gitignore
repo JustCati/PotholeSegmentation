@@ -4,6 +4,7 @@ output/*
 OUTPUT/*
 riepilogo.*
 mask_*
+!mask_*.zip
 
 # General
 .DS_Store
