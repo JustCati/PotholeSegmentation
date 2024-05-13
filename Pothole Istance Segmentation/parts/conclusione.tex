@@ -1,2 +1,17 @@
 \chapter*{Conclusion} %l'asterisco dopo chapter serve per visualizzare il capitolo come "non numerato"
 \addcontentsline{toc}{chapter}{Conclusion} %per fare inserire il capitolo nella tabella dei contenuti
+
+In this project we have shown a possible implementation of the Mask R-CNN architecture for the task of road pothole instance segmentation. We have shown that the model is able to achieve good performance on the task, and we have provided an analysis of the results obtained on the dataset used for the experiments. 
+
+It's also worth noting that there are some limitations.
+As we have shown in the experiments chapter, the main problem of the project is the dataset. The dataset is too small and in some cases the annotations are not correct or not enough for the number of objects in the image. 
+
+This bad labelling of the dataset is not only a problem for the training process of the model, but also for its evaluation. In fact, the evaluation of the model is done using the Intersection over Union metric: if the ground truth mask is not correct or missing, the evaluation metrics will suffer and the results will be not reliable or, in general, the mAP will be lower than the real performance of the model.
+
+We also have some minor problems with the general implementation of the model. 
+
+The first one is the use of a fixed value for the threshold in the evaluation. This value is set to 0.7, but it would be better to find the best threshold for performance by a process of hyperparameter tuning. 
+The second problem is the lack of non maximum suppression during the forward of the model itself: this leaves the model to predict multiple instances of the same object in the image. This lowers the performance of the model since the evaluation is done on all the predictions, even the overlapping ones.
+
+Future work could be done in different directions. The first one is to use a better dataset: a larger dataset with differnent types of potholes and better annotations would improve the performance of the model.
+Another possible improvement is to use a different backbone for the model. In this project we used the ResNet50-FPN backbone, but it would be interesting to see how the model performs with a different backbone, like ResNet101.
