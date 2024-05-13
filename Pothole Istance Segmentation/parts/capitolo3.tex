@@ -75,6 +75,6 @@ In particular, we just used the following techniques:
 \end{itemize}
 
 We also give a custom implementation of the \textit{Gaussian Blur} filter and the \textit{Gaussian Noise} filter. The first one is used to simulate the blur that can be present in the images due to the motion of the camera or the presence of rain: for this reason, the filter is applied also with the purpose of increasing the model generalization and performance. 
-The latter is actually not used in the final implementation of the model, but it is still present in the code. The reason behind this is shown in the Experiments section.
+The latter is actually not used in the final implementation of the model, but it is still present in the code. The reason behind this is because the Gaussian Noise is a heavy filter that can change drastically the image: experiments showed that the model could not learn well enough and performance suffered.
 
 We show an example of the images after the augmentation in Figure \ref{fig:augmentation_example}.
