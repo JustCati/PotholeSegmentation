@@ -21,6 +21,7 @@ The model was trained for 50 epochs. We got the best results in the 32th epoch. 
 \end{figure}
 
 To evaluate the model we used the Mean Average Precision (mAP) metric for both the Bounding Box and the Segmentation Mask. In particular, both the problems needs a threshold in order to consider the prediction as correct. We used a threshold of 0.7 for both the tasks.
+Furthermore, we chose to track only the mask and bounding box loss and mAP. We specifically decided to ignore the classification loss since the model has to predict only one class and the task is not the main focus of the project.
 
 
 The model performed best at epoch 32 with an mAP of 50\% for the Segmentation Mask and 55\% for the Bounding Box. It's worth noting that the chosen model is not the best one in terms of Bounding Box mAP obtained during all the training process: since the task is more focused on the segmentation task, we chose the model that performed best in this specific case. Furthermore, the mAP difference between the best model and the chosen one is negligible.
