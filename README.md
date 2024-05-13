@@ -1,9 +1,10 @@
 # PotholeSegmentation
 
 ## Introduction
-Istance segmentation of images depicting road potholes using MASK-RCNN.
+Implementation of the Mask R-CNN archi- tecture for the task of road pothole istance segmentation. The model is able to achieve good performance on the task, also an analysis of the results obtained on the dataset used for the experiments is shown: results show that the main restriction is the lack of a large well labelled dataset and the ambiguity of the definition of pothole itself.
 
-[TODO] The same model is subsequently applied to street videos, offline, frame by frame, with the aim of promptly detecting the presence of potholes.
+The model achieve an mAP of 50% on the test set for the segmentation task and an mAP of 55% for the bounding box regression task.
+
 
 ## Screenshots
 ![Screenshot](results/Demo_1.png)
