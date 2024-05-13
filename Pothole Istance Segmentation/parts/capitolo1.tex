@@ -1,0 +1,15 @@
+\chapter{Introduction}
+
+
+Road pothole detection is a common problem in the field of road maintenance. Actual solution to this problem are based on manual inspection or 3D reconstruction, which are both time consuming and expensive. 
+
+The use of Computer Vision techniques can help to automate this process and make it more efficient by using cameras mounted on streets light poles and elaborate the videos in an offline manner, frame by frame.
+To do so, it is necessary to develop a system that can detect and segment potholes in the video frames.\\
+
+In this paper we use Mask R-CNN, a model that keep State-Of-The-Art performance in this type of tasks. We will show how this model can be used to detect and segment potholes in images and how it can be trained to improve its performance on this specific task.
+
+We used a dataset of images of potholes taken from Kaggle. It is formed of only 780 images so data augmentation techniques were used to increase the size of the dataset itself. 
+
+The performed experiments shows that the task if feasible and that the model performs well in generalizing various potholes shapes and sizes. It is also shown that the model is limited by the quality of the used dataset: we will show examples of bad labelling and how it affects the model performance evaluation.
+
+Future improvements can be made just by using a more accurate dataset and by using a more complex backbone for the model.
