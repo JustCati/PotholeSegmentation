@@ -81,7 +81,7 @@ def plotPerf(args):
         plt.plot(value, c="gray", alpha=0.5)
         plt.plot(newvalue, c="red")
         plt.title(key)
-        plt.xlabel("Epoch")
+        plt.xlabel("Iteration")
         plt.ylabel("Value")
         plt.grid(True)
         plt.tight_layout()
