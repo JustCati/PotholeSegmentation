@@ -14,7 +14,7 @@ The model achieve an mAP of 50% on the test set for the segmentation task and an
 ### Training Accuracy on Validation Set
 <img src="images/val_acc.png" width=75% height=75%>
 
-
+<br><br><br>
 ## Demo Example
 Every image is shown as a triplet: the outer left is the original image, the middle one is the ground truth and the right one is the prediction of the model.
 
