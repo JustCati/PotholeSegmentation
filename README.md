@@ -18,7 +18,6 @@ The model achieve an mAP of 50% on the test set for the segmentation task and an
 ## Demo Example
 Every image is shown as a triplet: the outer left is the original image, the middle one is the ground truth and the right one is the prediction of the model.
 
-<br><br><br>
 ### Example 1: Good Prediction (Easy)
 <img src="images/easy.png" width=75% height=75%>
 
