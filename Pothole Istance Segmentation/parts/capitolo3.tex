@@ -11,7 +11,6 @@ The images are in the format of 640x640 pixels and are annotated in YOLOv8 forma
 
 In order to increase the size of the dataset, for each image, there are 3 versions with different augmentations between:
 \begin{itemize}
-    \item 50\% probability of horizontal flip
     \item Randomly crop between 0 and 20 percent of the image
     \item Random rotation of between -15 and +15 degrees
     \item Random shear of between -5° to +5° horizontally and -5° to +5° vertically
@@ -52,7 +51,7 @@ The conversion is done using the function \textit{generateJSON} that takes as in
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.7\textwidth]{Images/sample.png}
-    \caption{Example of the images after the augmentation. On the left the resulting mask, on the right the original image with labels.}
+    \caption{Example of the images after the augmentation. On the left the resulting mask, on the right the original image with labels after augmentation.}
     \label{fig:augmentation_example}
 \end{figure}
 
@@ -68,7 +67,7 @@ The json file is structured as follows:
 
 \section{Data Augmentation}
 The dataset used for this project is quite small, even after the augmentation done by the authors. To tackle this problem, we used data augmentation techniques to increase the size of the dataset.
-In particular, we just used the following techniques:
+In particular, we just added the following techniques:
 \begin{itemize}
     \item Horizontal flip with a probability of 50\%;
     \item Vertical flip with a probability of 50\%;

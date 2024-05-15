@@ -1,5 +1,5 @@
 \chapter{Related Information}
-In this we will talk about the related information to the project such as the segmentation task itself, the metrics and all the tools used throughout the project.
+In this chapter we will talk about the related information to the project such as the segmentation task itself and the metrics used throughout the project.
 
 \section{Segmentation}
 The task of segmentation is to divide an image into multiple segments, each of which represents a different object or part of the image. Image segmentation is typically used to locate objects and boundaries in images. More precisely, it is the process of assigning a label to every pixel in an image such that pixels with the same label share certain characteristics. 
@@ -16,23 +16,23 @@ Common approaches to image segmentation include:
     \item Statistical Region Merging
 \end{itemize}
 
-As of today, the most used approach to image segmentation is the use of deep learning models, most of wich are based on Convolutional Neural Networks (CNN). These models are able to learn the features of the images and use them to segment the images by analyzing specific region of interest found by the model itself.
+As of today, the most used approach to image segmentation is the use of deep learning models, most of wich are based on Convolutional Neural Networks (CNN). These models are able to learn the features of the images and use these to segment the target by analyzing specific region of interest found by the model itself.
 
 
 \subsection*{Istance Segmentation}
 Instance segmentation is an extension of object detection, where the goal is to detect each object instance in an image while also segmenting the object. 
 It's a challenging task because it requires the model to predict the class of the object and the mask that identifies the object's location, on top of the necessity to regress a bounding box around the object. 
-However, instance segmentation is a very useful task because it allows to differentiate between objects of the same class, which is not possible with object detection. It is also more useful than simple semantic segmentation or panoptic segmentation because it provides more detailed information about the objects in the image. 
+However, instance segmentation is a very useful task because it allows to differentiate between objects of the same class, which is not possible with simple object detection. It is also more useful than simple semantic segmentation or panoptic segmentation because it provides more detailed information about the objects in the image. 
 
 \section{Metrics}
 In order to evaluate the performance of the model, we need to use some metrics that can help us understand how well the model is performing.
-In this project, we will focus on mAP (mean Average Precision) that use the IoU (Intersection over Union) metric at different thresholds to evaluate the performance of the model.
+In this project, we will focus on mAP (mean Average Precision) that use the IoU (Intersection over Union) metric at different thresholds.
 
 
 \subsection*{IoU - Intersection over Union}
 Since we are dealing with images, the most common approaches are based on the use of the Intersection over Union (IoU) metric. The IoU is a measure of the overlap between two objects: the ground truth and the predicted one. 
 
-It is calculated as the area of overlap divided by the area of union between the ground thruth and the predicted object, as shown in the following formula:
+It is calculated as the area of overlap divided by the area of union between the two, as shown in the following formula:
 
 \begin{equation}
     IoU = \frac{A \cap B}{A \cup B}
