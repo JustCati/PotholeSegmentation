@@ -5,6 +5,9 @@ OUTPUT/*
 riepilogo.*
 mask_*
 !mask_*.zip
+document.*
+!document.tex
+!document.pdf
 
 # General
 .DS_Store
