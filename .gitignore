@@ -1,6 +1,8 @@
 # Own
+data
 data/*
 output/*
+OUTPUT
 OUTPUT/*
 riepilogo.*
 mask_*
