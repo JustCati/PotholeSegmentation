@@ -265,7 +265,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pothole Segmentation")
-    parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data"), help="Path to the data directory")
+    parser.add_argument("--path", type=str, default=os.path.join(os.getcwd(), "data", "Potholes"), help="Path to the data directory")
     parser.add_argument("--sample", action="store_true", default=False, help="Plot a sample image from the dataset with ground truth masks")
     parser.add_argument("--train", action="store_true", default=False, help="Force Training of the model")
     parser.add_argument("--demo", type=str, default="", help="Run a demo of inference on 3 random image from the validation set with the model at the specified path")
